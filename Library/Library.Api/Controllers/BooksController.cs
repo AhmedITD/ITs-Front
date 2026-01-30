@@ -29,19 +29,19 @@ public class BookController(IBookService bookService) : BaseController
     public async Task<ActionResult<List<CreateBookResponse>>> GetAllBooks([FromQuery]GetAllBooksRequest request, CancellationToken cancellationToken)
     {
         ApiResponse<PaginatedList<Book>> books = await bookService.GetAllBooks(request, cancellationToken);
-        return Ok(books);
+        return books.Success ? Ok(books) : BadRequest(books);
     }
     [HttpPut]
     public async Task<ActionResult<UpdateBookResponse>> UpdateBook([FromBody]UpdateBookRequest request, CancellationToken cancellationToken)
     {
         ApiResponse<UpdateBookResponse> book = await bookService.UpdateBook(request, cancellationToken);
-        return Ok(book);
+        return book.Success ? Ok(book) : BadRequest(book);
     }
 
     [HttpDelete]
     public async Task<ActionResult<DeleteBookResponse>> DeleteBook([FromQuery]DeleteBookRequest request, CancellationToken cancellationToken)
     {
         ApiResponse<DeleteBookResponse> book = await bookService.DeleteBook(request, cancellationToken);
-        return Ok(book);
+        return book.Success ? Ok(book) : BadRequest(book);
     }
 }

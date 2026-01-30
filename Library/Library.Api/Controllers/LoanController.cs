@@ -26,6 +26,8 @@ public class LoanController(ILoanService LoanService) : BaseController
     }
 
     [HttpGet]
+    [Authorize("Admin")]
+
     public async Task<ActionResult<List<GetHistorcailByIdLoanResponse>>> GetHistorcailByUserIdLoan(
         [FromQuery] int userId,
         [FromQuery] int PageSize,

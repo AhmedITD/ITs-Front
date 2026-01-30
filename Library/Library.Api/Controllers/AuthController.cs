@@ -20,16 +20,14 @@ public class AuthController(IAuthService authService) : BaseController
     public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         ApiResponse<RegisterResponse> result = await authService.Register(request, cancellationToken);
-        if (result.Data is null)
-            return BadRequest(result);
-        return Created($"/User/{result.Data.Id}", result);
+        return result.Success ? Created($"/User/{result.Data!.Id}", result) : BadRequest(result);
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         ApiResponse<LoginResponse> result = await authService.Login(request, cancellationToken);
-        return Ok(result);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [Authorize("Admin")]
@@ -37,13 +35,13 @@ public class AuthController(IAuthService authService) : BaseController
     public async Task<ActionResult<ApiResponse<List<User>>>> GetAllUsers(CancellationToken cancellationToken)
     {
         ApiResponse<List<User>> users = await authService.GetAllUsers(cancellationToken);
-        return Ok(users);
+        return users.Success ? Ok(users) : BadRequest(users);
     }
     [Authorize]
     [HttpGet("Me")]
     public async Task<ActionResult<ApiResponse<User>>> Me(CancellationToken cancellationToken)
     {
-        ApiResponse<User> users = await authService.Me(cancellationToken);
-        return Ok(users);
+        ApiResponse<User> response = await authService.Me(cancellationToken);
+        return response.Success ? Ok(response) : BadRequest(response);
     }
 }
