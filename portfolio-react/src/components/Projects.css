@@ -1,0 +1,36 @@
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.project-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-5px);
+}
+
+.project-card h4 {
+  margin: 0 0 6px 0;
+}
+
+.project-card p {
+  color: #cfcfe3;
+  margin: 6px 0;
+}
+
+.link {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: #7a92ff;
+}
