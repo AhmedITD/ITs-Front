@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RentARide.Api/RentARide.Api.csproj" />
+  <Project Path="RentARide.Application/RentARide.Application.csproj" />
+  <Project Path="RentARide.Domain/RentARide.Domain.csproj" />
+  <Project Path="RentARide.Infrastructure/RentARide.Infrastructure.csproj" />
+</Solution>
