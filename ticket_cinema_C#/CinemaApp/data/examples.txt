@@ -1,0 +1,43 @@
+=== Cinema Application - Example Commands ===
+
+Setup (add rooms and movies first):
+  add-room "Room A" 100
+  add-room "Room B" 150
+  add-room "IMAX" 200
+  
+  add-movie "Inception" 02:28
+  add-movie "The Matrix" 02:16
+  add-movie "Interstellar" 02:49
+  add-movie "The Dark Knight" 02:32
+
+Add Shows:
+  add-show "Inception" "Room A" 2025-11-01T10:00 12.99
+  add-show "The Matrix" "Room B" 2025-11-01T10:30 11.99
+  add-show "Inception" "IMAX" 2025-11-01T13:00 15.99
+  add-show "Interstellar" "Room A" 2025-11-01T14:00 13.99
+  add-show "The Dark Knight" "Room B" 2025-11-01T17:00 12.99
+
+List Shows:
+  list-shows 2025-11-01
+
+Book Seats (use show ID from list-shows):
+  book <show-id-here> 10 11 12
+  book <show-id-here> 25
+
+Marathon Planning (finds non-overlapping shows):
+  marathon 2025-11-01
+  
+Expected Marathon Output:
+  Show 1: Inception (10:00-12:28)
+  Show 2: Inception IMAX (13:00-15:28) - different room, no overlap
+  Show 3: The Dark Knight (17:00-19:32) - starts after previous ends
+
+Why Marathon Works:
+  - Greedy algorithm sorts by end time
+  - Picks shows that don't overlap in TIME (rooms don't matter)
+  - Maximizes number of movies you can watch in one day
+
+Error Cases:
+  book <show-id> 999          → Error: seat number too high
+  book <show-id> 10 10        → Error: seat 10 already booked (duplicate)
+  add-show "Unknown" "Room A" → Error: movie not found

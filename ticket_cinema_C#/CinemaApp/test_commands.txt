@@ -1,0 +1,7 @@
+add-room "Main Hall" 100
+add-room "VIP Theater" 50
+add-movie "Inception" 02:28
+add-movie "Avatar" 03:12
+add-movie "Forrest Gump" 02:22
+help
+exit

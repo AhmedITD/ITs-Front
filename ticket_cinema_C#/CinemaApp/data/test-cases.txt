@@ -1,0 +1,208 @@
+# CinemaApp Test Cases
+# Run these commands to test the cinema booking system
+
+# ============================================================================
+# Setup: Create Rooms and Movies (⭐ Easy)
+# ============================================================================
+
+# Add rooms with different capacities
+add-room "Room A" 100
+add-room "IMAX Theater" 200
+add-room "Small Screen" 50
+
+# Add movies with titles and durations (HH:mm format)
+add-movie "Inception" 02:28
+add-movie "The Matrix" 02:16
+add-movie "Interstellar" 02:49
+add-movie "Short Film" 00:45
+
+# ============================================================================
+# Create Shows (⭐⭐ Medium)
+# ============================================================================
+
+# Shows on 2025-11-01
+# Format: add-show "Movie" "Room" yyyy-MM-ddTHH:mm price
+add-show "Inception" "Room A" 2025-11-01T10:00 9.99
+add-show "The Matrix" "IMAX Theater" 2025-11-01T10:30 12.50
+add-show "Inception" "Small Screen" 2025-11-01T13:00 8.50
+add-show "Interstellar" "Room A" 2025-11-01T14:00 11.00
+add-show "Short Film" "Small Screen" 2025-11-01T16:00 5.00
+add-show "The Matrix" "Room A" 2025-11-01T18:00 10.00
+
+# Shows on 2025-11-02
+add-show "Inception" "IMAX Theater" 2025-11-02T09:00 13.00
+add-show "Interstellar" "Room A" 2025-11-02T12:00 11.50
+add-show "Short Film" "Small Screen" 2025-11-02T15:00 5.00
+add-show "The Matrix" "IMAX Theater" 2025-11-02T16:00 12.50
+
+# ============================================================================
+# List Shows (⭐⭐ Medium)
+# ============================================================================
+
+# List all shows for a specific date
+list-shows 2025-11-01
+# Expected: Shows sorted by start time with seat availability
+
+list-shows 2025-11-02
+# Expected: Shows for Nov 2
+
+list-shows 2025-11-03
+# Expected: "No shows scheduled for..."
+
+# ============================================================================
+# Book Seats (⭐⭐ Medium-Hard)
+# ============================================================================
+
+# First, list shows to get Show IDs
+list-shows 2025-11-01
+
+# Book seats (you'll need to copy the actual Show ID from the output above)
+# Format: book <ShowId> seat1 [seat2 seat3 ...]
+# Example (replace with actual ID):
+# book 12345678-1234-1234-1234-123456789abc 10 11 12
+
+# Test cases to verify:
+# 1. Book valid seats (should succeed)
+# 2. Book already taken seats (should fail)
+# 3. Book seats out of range (should fail)
+# 4. Book seat 0 or negative (should fail)
+# 5. Book seat > capacity (should fail)
+
+# ============================================================================
+# Marathon Planning (⭐⭐⭐⭐⭐ Very Hard)
+# ============================================================================
+
+# Plan a marathon ticket - maximum non-overlapping shows
+marathon 2025-11-01
+# Expected: List of shows that don't overlap, maximizing count
+
+# Example expected output:
+# 🎬 Marathon Plan for 2025-11-01:
+#    You can watch 3 movie(s) without overlap!
+# -------------------------------------------------------------------------
+# 1. [xxx] Inception | Room A | 2025-11-01 10:00 - 12:28 | $9.99 | ...
+# 2. [xxx] Inception | Small Screen | 2025-11-01 13:00 - 15:28 | $8.50 | ...
+# 3. [xxx] Short Film | Small Screen | 2025-11-01 16:00 - 16:45 | $5.00 | ...
+# -------------------------------------------------------------------------
+# Total viewing time: 6h 1m
+
+marathon 2025-11-02
+
+# ============================================================================
+# Complete Test Scenario
+# ============================================================================
+
+# Scenario 1: Basic booking workflow
+add-room "Test Room" 10
+add-movie "Test Movie" 01:30
+add-show "Test Movie" "Test Room" 2025-11-15T14:00 7.50
+list-shows 2025-11-15
+# Copy the show ID from output, then:
+# book <ShowId> 1 2 3
+# Expected: "✓ Booked 3 seat(s): 1, 2, 3"
+
+# List again to see updated availability
+list-shows 2025-11-15
+# Expected: Available seats should be reduced by 3
+
+# Try to book same seats again
+# book <ShowId> 1 2 3
+# Expected: "✗ Booking failed. Seats may be invalid or already taken."
+
+# ============================================================================
+# Marathon Test with Overlaps
+# ============================================================================
+
+# Create overlapping shows to test greedy algorithm
+add-movie "Movie A" 02:00
+add-movie "Movie B" 01:30
+add-movie "Movie C" 01:00
+add-movie "Movie D" 01:30
+
+add-show "Movie A" "Room A" 2025-12-01T10:00 10.00
+add-show "Movie B" "Room A" 2025-12-01T11:00 10.00
+add-show "Movie C" "Room A" 2025-12-01T12:30 10.00
+add-show "Movie D" "Room A" 2025-12-01T14:00 10.00
+
+marathon 2025-12-01
+# Expected: Should select Movie A (10:00-12:00), then Movie C (12:30-13:30), then Movie D (14:00-15:30)
+# Total: 3 movies (greedy algorithm picks earliest ending first)
+
+# ============================================================================
+# Edge Cases to Test
+# ============================================================================
+
+# 1. Empty day (no shows)
+marathon 2025-01-01
+
+# 2. Single show
+add-show "Movie A" "Room A" 2025-01-02T10:00 10.00
+marathon 2025-01-02
+# Expected: 1 movie
+
+# 3. All shows overlap completely
+add-show "Movie A" "Room A" 2025-01-03T10:00 10.00
+add-show "Movie B" "Room A" 2025-01-03T10:15 10.00
+add-show "Movie C" "Room A" 2025-01-03T10:30 10.00
+marathon 2025-01-03
+# Expected: 1 movie (only first can be watched)
+
+# 4. Booking at capacity limit
+add-room "Tiny Room" 2
+add-show "Movie A" "Tiny Room" 2025-01-04T10:00 5.00
+list-shows 2025-01-04
+# book <ShowId> 1 2
+# Expected: Success
+# book <ShowId> 3
+# Expected: Fail (capacity reached or seat out of range)
+
+# ============================================================================
+# Command Reference
+# ============================================================================
+
+add-room "Name" capacity                    # Create cinema room
+add-movie "Title" HH:mm                     # Create movie
+add-show "Movie" "Room" yyyy-MM-ddTHH:mm price  # Create show
+list-shows yyyy-MM-dd                       # List shows for date
+book showId seat1 [seat2 ...]               # Book seats
+marathon yyyy-MM-dd                         # Plan marathon ticket
+exit                                        # Quit application
+
+# ============================================================================
+# Testing Tips for Students
+# ============================================================================
+
+# 1. Test Show.TryBook() method thoroughly:
+#    - Valid seats in range [1, Capacity]
+#    - Already taken seats
+#    - Out of range seats
+#    - Empty seat list
+
+# 2. Test InMemoryShowStore:
+#    - Add shows and verify they're stored
+#    - Find by ID (valid and invalid IDs)
+#    - All() returns all shows
+
+# 3. Test GreedyMarathonPlanner:
+#    - Empty day (no shows)
+#    - Single show
+#    - Non-overlapping shows (should select all)
+#    - Overlapping shows (should maximize count)
+#    - Verify greedy strategy: sort by end time first
+
+# 4. Test App command handlers:
+#    - Valid inputs
+#    - Invalid inputs (wrong argument count)
+#    - Missing movies/rooms (referential integrity)
+#    - Invalid show IDs
+
+# ============================================================================
+# Expected Behavior
+# ============================================================================
+
+# HashSet in Show.cs ensures O(1) seat lookup
+# Greedy algorithm maximizes NUMBER of movies (not total duration)
+# Shows are sorted by START time in list-shows
+# Marathon plan shows are sorted by selected order
+# Booking updates available seats count
+# Repository pattern allows easy storage replacement

@@ -1,0 +1,29 @@
+=== COMPLETE TEST SCRIPT FOR CINEMA APP ===
+
+Test 1: Basic Setup
+add-room "Main" 50
+add-room "Premium" 30
+add-movie "Dune" 02:46
+add-movie "Barbie" 01:54
+add-movie "Oppenheimer" 03:00
+
+Test 2: Create Shows
+add-show "Dune" "Main" 2025-12-20T18:00 15.99
+add-show "Barbie" "Premium" 2025-12-20T19:30 12.99
+add-show "Oppenheimer" "Main" 2025-12-20T21:00 16.99
+
+Test 3: List Shows for a Date
+list-shows 2025-12-20
+
+Test 4: Marathon Planning
+marathon 2025-12-20
+
+Test 5: Error Cases
+add-room "Test" 0
+add-movie "Invalid" 25:00
+add-show "Unknown" "Main" 2025-12-20T18:00 10.00
+add-show "Dune" "Unknown" 2025-12-20T18:00 10.00
+
+Test 6: Commands
+help
+exit
