@@ -12,13 +12,32 @@ const NOT_SUPERQI = 'Must run inside SuperQi';
 
 /** Auth with SuperQi token. POST { token } to auth endpoint. */
 export async function authWithSuperQi(token) {
-  const res = await fetch(ENDPOINTS.auth, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
-  });
-  if (!res.ok) throw new Error('Auth failed');
-  return res.json();
+  try {
+    const res = await fetch(ENDPOINTS.auth, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      const msg = body ? `Auth failed (${res.status}): ${body}` : `Auth failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return res.json();
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Auth failed')) throw e;
+    throw new Error(`Auth request failed: ${e?.message ?? e}`);
+  }
+}
+
+function formatSdkError(err, fallback) {
+  if (!err) return fallback;
+  const code = err.error ?? err.errorCode ?? err.code;
+  const msg = err.errMsg ?? err.message ?? err.msg;
+  if (code != null && msg) return `${fallback}: [${code}] ${msg}`;
+  if (msg) return `${fallback}: ${msg}`;
+  if (code != null) return `${fallback}: code ${code}`;
+  return fallback;
 }
 
 /** Get auth code/token from SuperQi. Returns { code, userInfo? }. */
@@ -27,7 +46,7 @@ export async function getAuthCode(_options = {}) {
   const code = await new Promise((resolve, reject) => {
     my.getAuthCode({
       success: (res) => resolve(res.authCode || res.token || res.code || ''),
-      fail: (err) => reject(err),
+      fail: (err) => reject(new Error(formatSdkError(err, 'getAuthCode failed'))),
     });
   });
   return { code };
@@ -47,7 +66,9 @@ export async function tradePay(params) {
   const headers = { 'Content-Type': 'application/json' };
   if (params.token) headers['Authorization'] = params.token;
 
-  const res = await fetch(ENDPOINTS.payment, {
+  let res;
+  try {
+    res = await fetch(ENDPOINTS.payment, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -56,16 +77,24 @@ export async function tradePay(params) {
       subject: params.subject || 'Parking',
     }),
   });
-  if (!res.ok) throw new Error('Payment request failed');
+  } catch (e) {
+    throw new Error(`Payment request failed: ${e?.message ?? e}`);
+  }
+  if (!res.ok) {
+    const body = await res.text();
+    const msg = body ? `Payment request failed (${res.status}): ${body}` : `Payment request failed (${res.status})`;
+    throw new Error(msg);
+  }
 
-  const { url } = await res.json();
-  if (!url) throw new Error('No payment URL');
+  const data = await res.json();
+  const url = data.url ?? data.paymentUrl;
+  if (!url) throw new Error('No payment URL in response');
 
   return new Promise((resolve, reject) => {
     my.tradePay({
       paymentUrl: url,
       success: (res) => resolve({ success: true, ...res }),
-      fail: (err) => reject(err || new Error('Payment failed')),
+      fail: (err) => reject(new Error(formatSdkError(err, 'Payment failed'))),
     });
   });
 }
@@ -78,7 +107,7 @@ export async function scan() {
   return new Promise((resolve, reject) => {
     (my.scan || my.device?.scan)({
       success: (res) => resolve(res.result || res.data || res.code || ''),
-      fail: (err) => reject(err),
+      fail: (err) => reject(new Error(formatSdkError(err, 'Scan failed'))),
     });
   });
 }
