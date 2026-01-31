@@ -1,11 +1,3 @@
-/**
- * Parse and validate scanned QR payload.
- */
-
-/**
- * @param {string} raw
- * @returns {{ type: string, sessionId?: string, amount?: number, parkId?: string, parkName?: string, userId?: string, userName?: string, valid: boolean, error?: string }}
- */
 export function decode(raw) {
   if (!raw || typeof raw !== 'string') {
     return { valid: false, error: 'Invalid QR content' };

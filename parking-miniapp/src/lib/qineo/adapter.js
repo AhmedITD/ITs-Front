@@ -1,16 +1,18 @@
-/**
- * Qineo/SuperQi Mini App API adapter.
- * Requires SuperQi runtime. Throws when not running inside SuperQi.
- */
-
 import { ENDPOINTS } from './config.js';
 
 const isSuperQi = typeof my !== 'undefined';
 const NOT_SUPERQI = 'Must run inside SuperQi';
 
-// --- Auth ---
+function formatSdkError(err, fallback) {
+  if (!err) return fallback;
+  const code = err.error ?? err.errorCode ?? err.code;
+  const msg = err.errMsg ?? err.message ?? err.msg;
+  if (code != null && msg) return `${fallback}: [${code}] ${msg}`;
+  if (msg) return `${fallback}: ${msg}`;
+  if (code != null) return `${fallback}: code ${code}`;
+  return fallback;
+}
 
-/** Auth with SuperQi token. POST { token } to auth endpoint. */
 export async function authWithSuperQi(token) {
   try {
     const res = await fetch(ENDPOINTS.auth, {
@@ -30,21 +32,11 @@ export async function authWithSuperQi(token) {
   }
 }
 
-function formatSdkError(err, fallback) {
-  if (!err) return fallback;
-  const code = err.error ?? err.errorCode ?? err.code;
-  const msg = err.errMsg ?? err.message ?? err.msg;
-  if (code != null && msg) return `${fallback}: [${code}] ${msg}`;
-  if (msg) return `${fallback}: ${msg}`;
-  if (code != null) return `${fallback}: code ${code}`;
-  return fallback;
-}
-
-/** Get auth code/token from SuperQi. Returns { code, userInfo? }. */
-export async function getAuthCode(_options = {}) {
+export async function getAuthCode(options = {}) {
   if (!isSuperQi) throw new Error(NOT_SUPERQI);
   const code = await new Promise((resolve, reject) => {
     my.getAuthCode({
+      scopes: options.scopes || ['auth_base', 'USER_ID'],
       success: (res) => resolve(res.authCode || res.token || res.code || ''),
       fail: (err) => reject(new Error(formatSdkError(err, 'getAuthCode failed'))),
     });
@@ -54,12 +46,11 @@ export async function getAuthCode(_options = {}) {
 
 export { isSuperQi };
 
-// --- Payment ---
+export function allowSystemSnapshot() {
+  if (!isSuperQi || !my.allowSystemSnapshot) return;
+  my.allowSystemSnapshot({ allow: true });
+}
 
-/**
- * Initiate payment via backend + my.tradePay.
- * Params: { orderId, amount, subject, token }
- */
 export async function tradePay(params) {
   if (!isSuperQi) throw new Error(NOT_SUPERQI);
 
@@ -69,14 +60,14 @@ export async function tradePay(params) {
   let res;
   try {
     res = await fetch(ENDPOINTS.payment, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      orderId: params.orderId,
-      amount: params.amount,
-      subject: params.subject || 'Parking',
-    }),
-  });
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        orderId: params.orderId,
+        amount: params.amount,
+        subject: params.subject || 'Parking',
+      }),
+    });
   } catch (e) {
     throw new Error(`Payment request failed: ${e?.message ?? e}`);
   }
@@ -99,9 +90,6 @@ export async function tradePay(params) {
   });
 }
 
-// --- Scan ---
-
-/** Scan QR code. Returns raw string payload. */
 export async function scan() {
   if (!isSuperQi) throw new Error(NOT_SUPERQI);
   return new Promise((resolve, reject) => {

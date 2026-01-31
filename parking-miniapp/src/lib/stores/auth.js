@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { getAuthCode, isSuperQi, authWithSuperQi } from '../qineo/index.js';
 
 const AUTH_KEY = 'parking_miniapp_auth';
@@ -18,34 +18,22 @@ auth.subscribe((v) => {
   else localStorage.removeItem(AUTH_KEY);
 });
 
-export const isLoggedIn = derived(auth, ($a) => !!$a?.userInfo);
-export const isAdmin = derived(auth, ($a) => $a?.userInfo?.role === 'admin');
+export async function login() {
+  const res = await getAuthCode({ scopes: ['auth_base', 'USER_ID'] });
+  let token = null;
+  let userInfo = null;
 
-export async function login(role = 'user') {
-  const res = await getAuthCode({ scopes: role === 'admin' ? ['admin'] : ['userInfo'] });
-  let userInfo = res.userInfo;
-
-  if (isSuperQi && res.code && !userInfo) {
+  if (res.code) {
     try {
       const data = await authWithSuperQi(res.code);
-      userInfo = data.userInfo || data.user || { id: data.id, name: data.name || 'User', role };
+      token = data.token || res.code;
+      userInfo = data.userInfo || data.user || (data.id && { id: data.id, name: data.name || 'User' });
     } catch (_) {
-      userInfo = { id: res.code?.slice(-8), name: 'User', role };
+      token = res.code;
     }
   }
-
-  if (!userInfo) userInfo = { id: res.code?.slice(-8), name: 'User', role };
-  auth.set({ code: res.code, userInfo });
+//
+  if (!userInfo) userInfo = { id: res.code?.slice(-8), name: 'User' };
+  auth.set({ code: res.code, token: token || res.code, userInfo });
   return userInfo;
-}
-
-export function logout() {
-  auth.set(null);
-}
-
-export function setRole(role) {
-  auth.update((a) => {
-    if (!a) return a;
-    return { ...a, userInfo: { ...a.userInfo, role } };
-  });
 }
