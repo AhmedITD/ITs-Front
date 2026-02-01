@@ -34,6 +34,13 @@ public class AuthController(IAuthService authService) : BaseController
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    [HttpPost("auth-with-superQi")]
+    public async Task<ActionResult<LoginResponse>> AuthWithSuperQi(AuthWithSuperQiRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.AuthWithSuperQi(request, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpPost("logout")]
     public async Task<ActionResult<ApiResponse<object>>> Logout(LogoutRequest request, CancellationToken cancellationToken)
     {

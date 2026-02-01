@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RentARide.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+28cf4eca28adc34dae8bfccda3912a585f199b6d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ec681f2c3befc0d765bc3bf6f0e3341b9946878")]
 [assembly: System.Reflection.AssemblyProductAttribute("RentARide.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RentARide.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

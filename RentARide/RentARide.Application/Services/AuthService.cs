@@ -15,6 +15,7 @@ public class AuthService(
     IPasswordService passwordService,
     IJwtTokenGenerator tokenGenerator,
     IRefreshTokenService refreshTokenService,
+    ISuperQiUserResolver superQiUserResolver,
     ICurrentUser currentUser) : IAuthService
 {
     public async Task<ApiResponse<RegisterResponse>> Register(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -65,6 +66,38 @@ public class AuthService(
         };
 
         return ApiResponse<LoginResponse>.SuccessResponse(response);
+    }
+
+    public async Task<ApiResponse<LoginResponse>> AuthWithSuperQi(AuthWithSuperQiRequest request, CancellationToken cancellationToken = default)
+    {
+        var userInfo = await superQiUserResolver.ResolveAsync(request.Token, cancellationToken);
+        if (userInfo == null)
+            return ApiResponse<LoginResponse>.ErrorResponse("Invalid or expired SuperQi auth code.");
+
+        var email = userInfo.Email?.Trim().ToLowerInvariant() ?? $"{userInfo.UserId}@superqi.rentaride.local";
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                FirstName = userInfo.FirstName ?? "SuperQi",
+                LastName = userInfo.LastName ?? "User",
+                Email = email,
+                PasswordHash = passwordService.HashPassword(Guid.NewGuid() + "-SuperQi-NoPassword"),
+                Role = UserRole.Customer
+            };
+            dbContext.Users.Add(user);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var (refreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
+        return ApiResponse<LoginResponse>.SuccessResponse(new LoginResponse
+        {
+            Token = tokenGenerator.GenerateToken(user),
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAt = refreshExpiresAt
+        });
     }
 
     public async Task<ApiResponse<LoginResponse>> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken = default)

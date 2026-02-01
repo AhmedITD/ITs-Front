@@ -118,6 +118,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<ISuperQiUserResolver, SuperQiUserResolver>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 //Policies

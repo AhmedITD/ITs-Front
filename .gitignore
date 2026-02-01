@@ -1,0 +1,9 @@
+# IDE / Editor
+.vs/
+.idea/
+*.DotSettings.user
+*.csproj.user
+
+# Build outputs
+RentARide/**/bin/
+RentARide/**/obj/
