@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace RentARide.Application.Common.Pagination;
 
-public class PaginatedList<T>
+public class PaginatedListResponse<T>
 {
     public List<T> Items { get; }
     public int TotalCount { get; }
@@ -11,7 +11,7 @@ public class PaginatedList<T>
     public bool HasPreviousPage => PageIndex > 1;
     public bool HasNextPage => PageIndex < TotalPages;
 
-    public PaginatedList(List<T> items, int count, int pageIndex, int pageSize)
+    public PaginatedListResponse(List<T> items, int count, int pageIndex, int pageSize)
     {
         PageIndex = pageIndex;
         TotalPages = (int)Math.Ceiling(count / (double)pageSize);
@@ -19,7 +19,7 @@ public class PaginatedList<T>
         Items = items;
     }
 
-    public static async Task<PaginatedList<T>> CreateAsync(
+    public static async Task<PaginatedListResponse<T>> CreateAsync(
         IQueryable<T> source, int pageIndex, int pageSize, CancellationToken cancellationToken = default)
     {
         var count = await source.CountAsync(cancellationToken);
@@ -29,6 +29,6 @@ public class PaginatedList<T>
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PaginatedList<T>(items, count, pageIndex, pageSize);
+        return new PaginatedListResponse<T>(items, count, pageIndex, pageSize);
     }
 }
