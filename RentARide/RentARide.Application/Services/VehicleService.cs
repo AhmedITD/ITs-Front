@@ -1,5 +1,4 @@
 using RentARide.Application.Common;
-using RentARide.Application.Common.Pagination;
 using RentARide.Application.DTOs.Requests.VehicleRequest;
 using RentARide.Application.DTOs.Responses.VehicleResponse;
 using RentARide.Application.Interfaces;
@@ -8,6 +7,7 @@ using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Mapster;
+using RentARide.Application.DTOs.Responses.Common;
 
 namespace RentARide.Application.Services;
 
@@ -107,7 +107,7 @@ public class VehicleService(
         return ApiResponse<IReadOnlyList<VehicleTypeDto>>.SuccessResponse(types);
     }
 
-    public async Task<ApiResponse<PaginatedList<VehicleDto>>> BrowseVehicles(BrowseVehiclesRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<PaginatedListResponse<VehicleDto>>> BrowseVehicles(BrowseVehiclesRequest request, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Vehicles
             .AsNoTracking()
@@ -118,13 +118,13 @@ public class VehicleService(
             query = query.Where(v => v.VehicleTypeId == request.VehicleTypeId.Value);
 
         var projected = query.ProjectToType<VehicleDto>();
-        var paginated = await PaginatedList<VehicleDto>.CreateAsync(
+        var paginated = await PaginatedListResponse<VehicleDto>.CreateAsync(
             projected,
             request.PageNumber,
             request.PageSize,
             cancellationToken);
 
-        return ApiResponse<PaginatedList<VehicleDto>>.SuccessResponse(paginated);
+        return ApiResponse<PaginatedListResponse<VehicleDto>>.SuccessResponse(paginated);
     }
 
     public async Task<ApiResponse<VehicleTypeDto>> CreateVehicleType(CreateVehicleTypeRequest request, CancellationToken cancellationToken = default)

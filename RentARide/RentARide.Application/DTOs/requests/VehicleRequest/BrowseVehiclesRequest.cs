@@ -1,8 +1,8 @@
+using RentARide.Application.DTOs.requests.Common;
+
 namespace RentARide.Application.DTOs.Requests.VehicleRequest;
 
-public class BrowseVehiclesRequest
+public class BrowseVehiclesRequest : PaginatedListRequest
 {
-    public int PageNumber { get; set; } = 1;
-    public int PageSize { get; set; } = 10;
     public int? VehicleTypeId { get; set; }
 }

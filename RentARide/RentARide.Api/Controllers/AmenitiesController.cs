@@ -5,6 +5,7 @@ using RentARide.Application.DTOs.Responses.AmenityResponse;
 using RentARide.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentARide.Application.DTOs.Responses.Common;
 
 namespace RentARide.Api.Controllers;
 

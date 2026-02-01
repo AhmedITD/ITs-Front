@@ -1,4 +1,4 @@
-namespace RentARide.Application.Common;
+namespace RentARide.Application.DTOs.Responses.Common;
 
 public class ApiResponse<T>
 {

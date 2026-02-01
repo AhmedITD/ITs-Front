@@ -1,7 +1,7 @@
 using FluentValidation;
 using RentARide.Application.DTOs.Requests.RentalRequest;
 
-namespace RentARide.Application.Validators;
+namespace RentARide.Application.Validators.Rental;
 
 public class CreateRentalRequestValidator : AbstractValidator<CreateRentalRequest>
 {
@@ -11,7 +11,8 @@ public class CreateRentalRequestValidator : AbstractValidator<CreateRentalReques
             .GreaterThan(0).WithMessage("Vehicle ID must be greater than 0.");
 
         RuleFor(x => x.StartDate)
-            .NotEmpty().WithMessage("Start date is required.");
+            .NotEmpty().WithMessage("Start date is required.")
+            .GreaterThanOrEqualTo(DateTime.UtcNow).WithMessage("Start date must be in the future.");
 
         RuleFor(x => x.EndDate)
             .NotEmpty().WithMessage("End date is required.")

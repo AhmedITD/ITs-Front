@@ -20,7 +20,8 @@ public class RentARideDbContext : DbContext, IRentARideDbContext
     public DbSet<Amenity> Amenities { get; set; }
     public DbSet<RentalAmenity> RentalAmenities { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
-
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RentARideDbContext).Assembly);

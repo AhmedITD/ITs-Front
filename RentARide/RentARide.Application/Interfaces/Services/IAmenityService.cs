@@ -1,6 +1,7 @@
 using RentARide.Application.Common;
 using RentARide.Application.DTOs.Requests.AmenityRequest;
 using RentARide.Application.DTOs.Responses.AmenityResponse;
+using RentARide.Application.DTOs.Responses.Common;
 
 namespace RentARide.Application.Interfaces.Services;
 

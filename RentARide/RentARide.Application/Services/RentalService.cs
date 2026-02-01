@@ -1,5 +1,5 @@
+using System.Text.Json;
 using RentARide.Application.Common;
-using RentARide.Application.Common.Pagination;
 using RentARide.Application.DTOs.Requests.RentalRequest;
 using RentARide.Application.DTOs.Responses.RentalResponse;
 using RentARide.Application.Interfaces;
@@ -9,6 +9,7 @@ using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Mapster;
+using RentARide.Application.DTOs.Responses.Common;
 
 namespace RentARide.Application.Services;
 
@@ -102,7 +103,93 @@ public class RentalService(
             : ApiResponse<RentalDto>.ErrorResponse("Failed to create rental.");
     }
 
-    public async Task<ApiResponse<PaginatedList<RentalHistoryItemDto>>> GetMyHistory(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<RentalDto>> CreateRentalFromInvoice(Guid invoiceId, CancellationToken cancellationToken = default)
+    {
+        var invoice = await dbContext.Invoices
+            .Include(i => i.Vehicle)
+            .FirstOrDefaultAsync(i => i.Id == invoiceId, cancellationToken);
+        if (invoice == null)
+            return ApiResponse<RentalDto>.ErrorResponse("Invoice not found.");
+        if (invoice.Status != InvoiceStatus.Paid)
+            return ApiResponse<RentalDto>.ErrorResponse("Invoice is not paid.");
+
+        var vehicle = invoice.Vehicle;
+        if (vehicle == null)
+            return ApiResponse<RentalDto>.ErrorResponse("Vehicle not found.");
+        if (vehicle.Status != VehicleStatus.Available)
+            return ApiResponse<RentalDto>.ErrorResponse("Vehicle is not available.");
+
+        var startUtc = invoice.StartDate;
+        var endUtc = invoice.EndDate;
+        var hasOverlap = await dbContext.Rentals
+            .AnyAsync(r =>
+                r.VehicleId == invoice.VehicleId &&
+                r.Status == RentalStatus.Active &&
+                startUtc < r.EndDate &&
+                endUtc > r.StartDate,
+                cancellationToken);
+        if (hasOverlap)
+            return ApiResponse<RentalDto>.ErrorResponse("Vehicle is already rented for the selected dates.");
+
+        List<int> amenityIds = new();
+        if (!string.IsNullOrWhiteSpace(invoice.AmenityIdsJson))
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<List<int>>(invoice.AmenityIdsJson);
+                if (parsed != null)
+                    amenityIds = parsed.Where(id => id > 0).Distinct().ToList();
+            }
+            catch { /* ignore invalid json */ }
+        }
+
+        var amenities = amenityIds.Count > 0
+            ? await dbContext.Amenities
+                .Where(a => amenityIds.Contains(a.Id))
+                .ToListAsync(cancellationToken)
+            : new List<Amenity>();
+
+        var rental = new Rental
+        {
+            UserId = invoice.UserId,
+            VehicleId = invoice.VehicleId,
+            StartDate = startUtc,
+            EndDate = endUtc,
+            TotalPrice = invoice.TotalAmount,
+            Status = RentalStatus.Active,
+            InvoiceId = invoice.Id,
+        };
+
+        dbContext.Rentals.Add(rental);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        foreach (var amenity in amenities)
+        {
+            dbContext.RentalAmenities.Add(new RentalAmenity
+            {
+                RentalId = rental.Id,
+                AmenityId = amenity.Id
+            });
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        vehicle.Status = VehicleStatus.Rented;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var dto = await dbContext.Rentals
+            .AsNoTracking()
+            .Include(r => r.Vehicle)
+            .Include(r => r.RentalAmenities).ThenInclude(ra => ra.Amenity)
+            .Where(r => r.Id == rental.Id)
+            .ProjectToType<RentalDto>()
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return dto != null
+            ? ApiResponse<RentalDto>.SuccessResponse(dto)
+            : ApiResponse<RentalDto>.ErrorResponse("Failed to create rental.");
+    }
+
+    public async Task<ApiResponse<PaginatedListResponse<RentalHistoryItemDto>>> GetMyHistory(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Rentals
             .AsNoTracking()
@@ -111,8 +198,8 @@ public class RentalService(
             .OrderByDescending(r => r.StartDate);
 
         var projected = query.ProjectToType<RentalHistoryItemDto>();
-        var paginated = await PaginatedList<RentalHistoryItemDto>.CreateAsync(projected, pageNumber, pageSize, cancellationToken);
+        var paginated = await PaginatedListResponse<RentalHistoryItemDto>.CreateAsync(projected, pageNumber, pageSize, cancellationToken);
 
-        return ApiResponse<PaginatedList<RentalHistoryItemDto>>.SuccessResponse(paginated);
+        return ApiResponse<PaginatedListResponse<RentalHistoryItemDto>>.SuccessResponse(paginated);
     }
 }

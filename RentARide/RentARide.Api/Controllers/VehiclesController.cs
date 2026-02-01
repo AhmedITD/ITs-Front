@@ -1,11 +1,10 @@
 using RentARide.Api.Common;
-using RentARide.Application.Common;
-using RentARide.Application.Common.Pagination;
 using RentARide.Application.DTOs.Requests.VehicleRequest;
 using RentARide.Application.DTOs.Responses.VehicleResponse;
 using RentARide.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentARide.Application.DTOs.Responses.Common;
 
 namespace RentARide.Api.Controllers;
 
@@ -68,7 +67,7 @@ public class VehiclesController(IVehicleService vehicleService) : BaseController
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<PaginatedList<VehicleDto>>>> BrowseVehicles([FromQuery] BrowseVehiclesRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<PaginatedListResponse<VehicleDto>>>> BrowseVehicles([FromQuery] BrowseVehiclesRequest request, CancellationToken cancellationToken)
     {
         var result = await vehicleService.BrowseVehicles(request, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);

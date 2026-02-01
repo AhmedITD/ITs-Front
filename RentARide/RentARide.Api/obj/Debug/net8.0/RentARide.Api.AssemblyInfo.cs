@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RentARide.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7bdf21e5a36051eaa75ddf63ae44d4d251fdcab8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+28cf4eca28adc34dae8bfccda3912a585f199b6d")]
 [assembly: System.Reflection.AssemblyProductAttribute("RentARide.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RentARide.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

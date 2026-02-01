@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RentARide.Application.Common;
+using RentARide.Application.DTOs.Responses.Common;
 using RentARide.Domain.Exceptions;
 
 namespace RentARide.Infrastructure.Services;

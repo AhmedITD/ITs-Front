@@ -1,7 +1,7 @@
 using FluentValidation;
 using RentARide.Application.DTOs.Requests.AmenityRequest;
 
-namespace RentARide.Application.Validators;
+namespace RentARide.Application.Validators.Amenity;
 
 public class CreateAmenityRequestValidator : AbstractValidator<CreateAmenityRequest>
 {

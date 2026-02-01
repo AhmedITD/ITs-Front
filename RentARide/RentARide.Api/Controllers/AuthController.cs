@@ -1,6 +1,7 @@
 using RentARide.Api.Common;
 using RentARide.Application.Common;
 using RentARide.Application.DTOs.Requests.AuthRequest;
+using RentARide.Application.DTOs.Responses.Common;
 using RentARide.Application.DTOs.Responses.AuthResponse;
 using RentARide.Application.Interfaces.Auth;
 using RentARide.Domain.Entities;
@@ -24,6 +25,27 @@ public class AuthController(IAuthService authService) : BaseController
     {
         var result = await authService.Login(request, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<LoginResponse>> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.Refresh(request, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("logout")]
+    public async Task<ActionResult<ApiResponse<object>>> Logout(LogoutRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.Logout(request, cancellationToken);
+        return Ok(result);
+    }
+    
+    [HttpPost("logoutAllDevices")]
+    public async Task<ActionResult<ApiResponse<object>>> Logout(CancellationToken cancellationToken)
+    {
+        var result = await authService.LogoutAllDevices(cancellationToken);
+        return Ok(result);
     }
 
     [Authorize]

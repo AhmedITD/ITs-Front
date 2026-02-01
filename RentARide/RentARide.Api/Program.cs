@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using FluentValidation;
@@ -24,6 +25,8 @@ using RentARide.Infrastructure.Services;
 using RentARide.Infrastructure.Services.Auth;
 using RentARide.Infrastructure.Services.Sinks;
 using RentARide.Api.Json;
+using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.Validators.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +51,12 @@ builder.Services.AddControllers()
     });
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+
+// Register all validators from the assembly containing 'Startup' or 'Program'
+// builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+// Enable automatic validation
+// builder.Services.AddFluentValidationAutoValidation();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -79,15 +88,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+//Cache Services
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IVehicleTypeCacheService, VehicleTypeCacheService>();
 
+//External Services
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
+builder.Services.AddScoped<IQiCardService, QiCardService>();
 
+//Audit Log Services
 builder.Services.AddScoped<AuditLogInterceptor>();
 builder.Services.AddScoped<IAuditLogSink, EfCoreAuditLogSink>();
 
+//Database Context
 builder.Services.AddDbContext<RentARideDbContext>((sp, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -95,19 +109,25 @@ builder.Services.AddDbContext<RentARideDbContext>((sp, options) =>
 });
 builder.Services.AddScoped<IRentARideDbContext, RentARideDbContext>();
 
-builder.Services.AddApplicationServices();
+builder.Services.AddApplicationServices(); //Services
 
+//Http Context Accessor (HttpContext)
 builder.Services.AddHttpContextAccessor();
+
+//Auth Services
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
+//Policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(UserRole.Admin.ToStringValue(), policy =>
         policy.RequireClaim(ClaimTypes.Role, UserRole.Admin.ToStringValue()));
 });
 
+//App Authtection (JWT)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = AuthConstants.JwtScheme;
@@ -132,8 +152,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+//Exception Handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+//CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -144,6 +166,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+//HangrFire Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -153,12 +176,23 @@ builder.Services.AddHangfire(config => config
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<OverdueRentalsJob>();
 
+// --------------------------------------------------------------------------------------------------------
 var app = builder.Build();
+// --------------------------------------------------------------------------------------------------------
 
-// CORS first so preflight and cross-origin requests succeed
+// Seed admin users if they don't exist
+using (var scope = app.Services.CreateScope())
+{
+    await AdminUserSeeder.SeedAsync(scope.ServiceProvider);
+}
+
+// UseCors first so preflight and cross-origin requests succeed
 app.UseCors();
 
+// UseSwagger
 app.UseSwagger();
+
+// UseSwaggerUI
 app.UseSwaggerUI(o =>
 {
     o.DisplayRequestDuration();
@@ -170,6 +204,7 @@ app.UseSwaggerUI(o =>
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 
+//...
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -177,11 +212,14 @@ app.UseExceptionHandler(_ => { });
 
 app.MapControllers();
 
+//Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire");
 
+//Hangfire Jobs
 RecurringJob.AddOrUpdate<OverdueRentalsJob>(
     "overdue-rentals",
     job => job.ExecuteAsync(CancellationToken.None),
     Cron.Hourly);
 
+//--------------------------------------------------------------------------------------------------------
 app.Run();

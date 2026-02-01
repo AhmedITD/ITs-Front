@@ -1,7 +1,7 @@
 using FluentValidation;
 using RentARide.Application.DTOs.Requests.AuthRequest;
 
-namespace RentARide.Application.Validators;
+namespace RentARide.Application.Validators.Auth;
 
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {

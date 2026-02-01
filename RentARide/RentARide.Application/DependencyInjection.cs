@@ -1,8 +1,6 @@
 using RentARide.Application.Interfaces.Auth;
 using RentARide.Application.Interfaces.Services;
 using RentARide.Application.Services;
-using RentARide.Application.Validators;
-using FluentValidation;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,11 +13,11 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IVehicleService, VehicleService>();
         services.AddScoped<IRentalService, RentalService>();
+        services.AddScoped<IInvoiceService, InvoiceService>();
         services.AddScoped<IAmenityService, AmenityService>();
-
         TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly);
 
-        services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+        // services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
         return services;
     }

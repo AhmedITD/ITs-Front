@@ -13,7 +13,8 @@ public interface IRentARideDbContext
     DbSet<Amenity> Amenities { get; set; }
     DbSet<RentalAmenity> RentalAmenities { get; set; }
     DbSet<AuditLog> AuditLogs { get; set; }
-
+    DbSet<RefreshToken> RefreshTokens { get; set; }
+    DbSet<Invoice> Invoices { get; set; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     int SaveChanges();
 }

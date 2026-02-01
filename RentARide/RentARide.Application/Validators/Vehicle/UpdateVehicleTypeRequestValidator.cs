@@ -1,7 +1,7 @@
 using FluentValidation;
 using RentARide.Application.DTOs.Requests.VehicleRequest;
 
-namespace RentARide.Application.Validators;
+namespace RentARide.Application.Validators.Vehicle;
 
 public class UpdateVehicleTypeRequestValidator : AbstractValidator<UpdateVehicleTypeRequest>
 {

@@ -6,6 +6,7 @@ using RentARide.Application.Interfaces.Auth;
 using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using RentARide.Application.DTOs.Responses.Common;
 
 namespace RentARide.Application.Services;
 
@@ -13,6 +14,7 @@ public class AuthService(
     IRentARideDbContext dbContext,
     IPasswordService passwordService,
     IJwtTokenGenerator tokenGenerator,
+    IRefreshTokenService refreshTokenService,
     ICurrentUser currentUser) : IAuthService
 {
     public async Task<ApiResponse<RegisterResponse>> Register(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -33,13 +35,16 @@ public class AuthService(
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        var (refreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
         var response = new RegisterResponse
         {
             Id = user.Id,
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
-            Token = tokenGenerator.GenerateToken(user)
+            Token = tokenGenerator.GenerateToken(user),
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAt = refreshExpiresAt
         };
 
         return ApiResponse<RegisterResponse>.SuccessResponse(response);
@@ -51,13 +56,45 @@ public class AuthService(
         if (user == null)
             return ApiResponse<LoginResponse>.ErrorResponse("Invalid credentials.");
 
+        var (refreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
         var response = new LoginResponse
         {
-            Token = tokenGenerator.GenerateToken(user)
+            Token = tokenGenerator.GenerateToken(user),
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAt = refreshExpiresAt
         };
 
         return ApiResponse<LoginResponse>.SuccessResponse(response);
     }
+
+    public async Task<ApiResponse<LoginResponse>> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await refreshTokenService.ValidateAsync(request.RefreshToken, cancellationToken);
+        if (user == null)
+            return ApiResponse<LoginResponse>.ErrorResponse("Invalid or expired refresh token.");
+
+        await refreshTokenService.RevokeAsync(request.RefreshToken, cancellationToken);
+        var (newRefreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
+        var response = new LoginResponse
+        {
+            Token = tokenGenerator.GenerateToken(user),
+            RefreshToken = newRefreshToken,
+            RefreshTokenExpiresAt = refreshExpiresAt
+        };
+        return ApiResponse<LoginResponse>.SuccessResponse(response);
+    }
+
+    public async Task<ApiResponse<object>> Logout(LogoutRequest request, CancellationToken cancellationToken = default)
+    {
+        await refreshTokenService.RevokeAsync(request.RefreshToken, cancellationToken);
+        return ApiResponse<object>.SuccessResponse(new { }, "Logged out successfully.");
+    }
+    public async Task<ApiResponse<object>> LogoutAllDevices(CancellationToken cancellationToken = default)
+    {
+        await refreshTokenService.RevokeAllForUserAsync(currentUser.Id, cancellationToken);
+        return ApiResponse<object>.SuccessResponse(new { }, "Logged out from all devices.");
+    }
+    
 
     public async Task<ApiResponse<User>> Me(CancellationToken cancellationToken = default)
     {

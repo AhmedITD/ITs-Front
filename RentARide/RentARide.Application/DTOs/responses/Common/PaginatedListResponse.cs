@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace RentARide.Application.Common.Pagination;
+namespace RentARide.Application.DTOs.Responses.Common;
 
 public class PaginatedListResponse<T>
 {

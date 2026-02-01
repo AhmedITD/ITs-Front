@@ -28,6 +28,13 @@ public class RentalConfiguration : IEntityTypeConfiguration<Rental>
             .HasForeignKey(x => x.VehicleId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(x => x.InvoiceId).IsRequired(false);
+
+        builder.HasOne(x => x.Invoice)
+            .WithMany()
+            .HasForeignKey(x => x.InvoiceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(x => x.RentalAmenities)
             .WithOne(x => x.Rental)
             .HasForeignKey(x => x.RentalId)

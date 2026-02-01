@@ -1,0 +1,375 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using RentARide.Application.DTOs.Requests.QiCard;
+using RentARide.Application.DTOs.Responses.QiCard;
+using RentARide.Application.Interfaces;
+
+namespace RentARide.Infrastructure.Services;
+
+public class QiCardService : IQiCardService
+{
+    private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<QiCardService> _logger;
+    private readonly string _baseUrl;
+    private readonly string _xTerminalId;
+    private readonly string _username;
+    private readonly string _password;
+    private readonly bool _isSandbox;
+
+    public QiCardService(
+        HttpClient httpClient,
+        IConfiguration configuration,
+        ILogger<QiCardService> logger)
+    {
+        _httpClient = httpClient;
+        _configuration = configuration;
+        _logger = logger;
+        _isSandbox = _configuration.GetValue<bool>("QiCard:Sandbox", false);
+
+        if (_isSandbox)
+        {
+            _baseUrl = "https://uat-sandbox-3ds-api.qi.iq/api/v1";
+            _xTerminalId = "237984";
+            _username = "paymentgatewaytest";
+            _password = "WHaNFE5C3qlChqNbAzH4";
+        }
+        else
+        {
+            _baseUrl = _configuration["QiCard:BaseUrl"] ?? "https://api-gate.qi.iq";
+            _xTerminalId = _configuration["QiCard:XTerminalId"] ?? string.Empty;
+            _username = _configuration["QiCard:Username"] ?? string.Empty;
+            _password = _configuration["QiCard:Password"] ?? string.Empty;
+        }
+    }
+
+    public async Task<QiCardResponse> InitiatePaymentAsync(QiCardPaymentRequest request , CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var appUrl = _configuration["App:Url"] ?? "https://localhost:5001";
+            
+            var payload = new
+            {
+                requestId = request.RequestId,
+                amount = request.Amount,
+                currency = request.Currency,
+                locale = "en_US",
+                finishPaymentUrl = request.FinishPaymentUrl ?? $"{appUrl}/payment/finish",
+                notificationUrl = request.NotificationUrl ?? $"{appUrl}/api/payments/webhook",
+                customerInfo = new
+                {
+                    firstName = request.CustomerInfo?.FirstName ?? "Customer",
+                    lastName = request.CustomerInfo?.LastName,
+                    email = request.CustomerInfo?.Email
+                },
+                browserInfo = new
+                {
+                    browserAcceptHeader = request.BrowserInfo?.BrowserAcceptHeader ?? "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    browserIp = request.BrowserInfo?.BrowserIp,
+                    browserJavaEnabled = request.BrowserInfo?.BrowserJavaEnabled ?? false,
+                    browserLanguage = NormalizeBrowserLanguage(request.BrowserInfo?.BrowserLanguage ?? "en-US"),
+                    browserColorDepth = "24",
+                    browserScreenWidth = "1024",
+                    browserScreenHeight = "768",
+                    browserTZ = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalMinutes.ToString(),
+                    browserUserAgent = request.BrowserInfo?.BrowserUserAgent ?? "Mozilla/5.0"
+                },
+                additionalInfo = new
+                {
+                    description = request.Description ?? string.Empty
+                }
+            };
+
+            _logger.LogInformation("QiCard payment payload: {Payload}", JsonSerializer.Serialize(payload));
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
+
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {authHeader}");
+            _httpClient.DefaultRequestHeaders.Add("X-Terminal-Id", _xTerminalId);
+
+            var response = await _httpClient.PostAsync($"{_baseUrl}/payment", content);
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = JsonSerializer.Deserialize<JsonElement>(responseBody);
+                
+                _logger.LogInformation("QiCard payment initiated successfully. Response: {Response}", responseBody);
+
+                return new QiCardResponse
+                {
+                    Success = true,
+                    Data = responseData,
+                    PaymentUrl = responseData.TryGetProperty("formUrl", out var formUrl) 
+                        ? GetStringValue(formUrl) 
+                        : responseData.TryGetProperty("payment_url", out var paymentUrl) 
+                            ? GetStringValue(paymentUrl) 
+                            : null,
+                    PaymentId = responseData.TryGetProperty("paymentId", out var paymentId) 
+                        ? GetStringValue(paymentId) 
+                        : responseData.TryGetProperty("id", out var id) 
+                            ? GetStringValue(id) 
+                            : null
+                };
+            }
+
+            var errorData = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            var errorMessage = "Payment initiation failed";
+
+            if (errorData.TryGetProperty("error", out var error))
+            {
+                if (error.TryGetProperty("description", out var desc))
+                    errorMessage = GetStringValue(desc) ?? errorMessage;
+                else if (error.TryGetProperty("message", out var msg))
+                    errorMessage = GetStringValue(msg) ?? errorMessage;
+            }
+            else if (errorData.TryGetProperty("message", out var msg))
+            {
+                errorMessage = GetStringValue(msg) ?? errorMessage;
+            }
+
+            _logger.LogError("QiCard payment initiation failed. Status: {Status}, Response: {Response}",
+                response.StatusCode, responseBody);
+
+            return new QiCardResponse
+            {
+                Success = false,
+                Error = errorMessage,
+                ErrorCode = errorData.TryGetProperty("error", out var err) && err.TryGetProperty("code", out var code)
+                    ? GetStringValue(code)
+                    : null,
+                StatusCode = (int)response.StatusCode
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "QiCard payment exception");
+            throw;
+        }
+    }
+
+    public async Task<QiCardResponse> VerifyPaymentAsync(string paymentId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
+            
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {authHeader}");
+            _httpClient.DefaultRequestHeaders.Add("X-Terminal-Id", _xTerminalId);
+
+            var response = await _httpClient.GetAsync($"{_baseUrl}/payment/{paymentId}/status");
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = JsonSerializer.Deserialize<JsonElement>(responseBody);
+                
+                _logger.LogInformation("QiCard payment verification successful. Response: {Response}", responseBody);
+                
+                return new QiCardResponse
+                {
+                    Success = true,
+                    Data = responseData,
+                    PaymentId = responseData.TryGetProperty("paymentId", out var pid) 
+                        ? GetStringValue(pid) 
+                        : responseData.TryGetProperty("id", out var id) 
+                            ? GetStringValue(id) 
+                            : paymentId
+                };
+            }
+            
+            _logger.LogError("QiCard payment verification failed. Status: {Status}, Response: {Response}",
+                response.StatusCode, responseBody);
+            
+            var errorData = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            return new QiCardResponse
+            {
+                Success = false,
+                Error = errorData.TryGetProperty("message", out var msg) 
+                    ? GetStringValue(msg) ?? "Payment verification failed"
+                    : "Payment verification failed",
+                StatusCode = (int)response.StatusCode
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "QiCard payment verification exception");
+            return new QiCardResponse
+            {
+                Success = false,
+                Error = ex.Message
+            };
+        }
+    }
+
+    public async Task<QiCardResponse> CancelPaymentAsync(string paymentId)
+    {
+        try
+        {
+            var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_username}:{_password}"));
+            
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Basic {authHeader}");
+            _httpClient.DefaultRequestHeaders.Add("X-Terminal-Id", _xTerminalId);
+
+            var response = await _httpClient.PostAsync($"{_baseUrl}/payment/{paymentId}/cancel", null);
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseData = JsonSerializer.Deserialize<JsonElement>(responseBody);
+                
+                _logger.LogInformation("QiCard payment cancellation successful. Response: {Response}", responseBody);
+                
+                return new QiCardResponse
+                {
+                    Success = true,
+                    Data = responseData
+                };
+            }
+            
+            _logger.LogError("QiCard payment cancellation failed. Status: {Status}, Response: {Response}",
+                response.StatusCode, responseBody);
+
+            var errorData = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            return new QiCardResponse
+            {
+                Success = false,
+                Error = errorData.TryGetProperty("message", out var msg) 
+                    ? GetStringValue(msg) ?? "Payment cancellation failed"
+                    : "Payment cancellation failed",
+                StatusCode = (int)response.StatusCode
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "QiCard payment cancellation exception");
+            return new QiCardResponse
+            {
+                Success = false,
+                Error = ex.Message
+            };
+        }
+    }
+
+    public Task<QiCardResponse> ProcessWebhookAsync(Dictionary<string, object> webhookData)
+    {
+        try
+        {
+            // Verify webhook signature if provided
+            if (webhookData.ContainsKey("signature"))
+            {
+                var isValid = VerifyWebhookSignature(webhookData);
+                if (!isValid)
+                {
+                    _logger.LogError("QiCard Invalid webhook signature webhookData: {webhookData}", webhookData);
+                    
+                    return Task.FromResult(new QiCardResponse
+                    {
+                        Success = false,
+                        Error = "Invalid webhook signature"
+                    });
+                }
+            }
+
+            return Task.FromResult(new QiCardResponse
+            {
+                Success = true,
+                Data = webhookData
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "QiCard webhook processing exception");
+            return Task.FromResult(new QiCardResponse
+            {
+                Success = false,
+                Error = ex.Message
+            });
+        }
+    }
+
+
+    /// <summary>
+    /// Normalizes browser language to meet QiCard API requirements (0-8 characters)
+    /// Extracts the primary language code and truncates if necessary
+    /// </summary>
+    private static string NormalizeBrowserLanguage(string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return "en";
+        }
+
+        // Extract primary language code (before comma, semicolon, or space)
+        var primaryLang = language.Split(',', ';', ' ')[0].Trim();
+        
+        // Truncate to max 8 characters if needed
+        if (primaryLang.Length > 8)
+        {
+            primaryLang = primaryLang.Substring(0, 8);
+        }
+
+        // If empty after processing, default to "en"
+        return string.IsNullOrWhiteSpace(primaryLang) ? "en" : primaryLang;
+    }
+
+    /// <summary>
+    /// Safely converts a JsonElement to string, handling both string and number types
+    /// </summary>
+    private static string? GetStringValue(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            return element.GetString();
+        }
+        else if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.GetRawText();
+        }
+        else if (element.ValueKind == JsonValueKind.True || element.ValueKind == JsonValueKind.False)
+        {
+            return element.GetBoolean().ToString();
+        }
+        else if (element.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+        else
+        {
+            return element.GetRawText();
+        }
+    }
+
+    private bool VerifyWebhookSignature(Dictionary<string, object> webhookData)
+    {
+        var secret = _configuration["QiCard:WebhookSecret"];
+        
+        if (!webhookData.ContainsKey("signature") || string.IsNullOrEmpty(secret))
+        {
+            return false;
+        }
+
+        // Example signature verification (adjust based on actual QiCard implementation)
+        var dataJson = JsonSerializer.Serialize(webhookData.GetValueOrDefault("data", new object()));
+        var expectedSignature = Convert.ToHexString(
+            System.Security.Cryptography.HMACSHA256.HashData(
+                Encoding.UTF8.GetBytes(secret),
+                Encoding.UTF8.GetBytes(dataJson)));
+
+        var providedSignature = webhookData["signature"]?.ToString() ?? string.Empty;
+        
+        return expectedSignature.Equals(providedSignature, StringComparison.OrdinalIgnoreCase);
+    }
+}
