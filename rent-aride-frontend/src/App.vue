@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 
-const { user, isLoggedIn, isAdmin, logout } = useAuth()
+const { user, isLoggedIn, isAdmin } = storeToRefs(useAuthStore())
 </script>
 
 <template>
@@ -61,7 +62,7 @@ const { user, isLoggedIn, isAdmin, logout } = useAuth()
           <button
             type="button"
             class="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
-            @click="logout()"
+            @click="useAuthStore().logout()"
           >
             Logout
           </button>

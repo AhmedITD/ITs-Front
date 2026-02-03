@@ -1,25 +1,31 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authService } from '@/servers/services/AuthService'
+import { parseUserFromToken } from '@/utils/jwt'
 import type { User } from '@/types/auth'
 
 const TOKEN_KEY = 'token'
 const REFRESH_KEY = 'refreshToken'
 const REFRESH_EXPIRES_KEY = 'refreshTokenExpiresAt'
 
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const refreshToken = ref<string | null>(localStorage.getItem(REFRESH_KEY))
   const refreshTokenExpiresAt = ref<string | null>(localStorage.getItem(REFRESH_EXPIRES_KEY))
-  const user = ref<User | null>(null)
-
+  const user = ref<User | null>(initialUser())
+  
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.role === 1)
-
+  
+  function initialUser(): User | null {
+    return parseUserFromToken(localStorage.getItem(TOKEN_KEY))
+  }
   function setTokens(t: string, r: string, expiresAt: string) {
     token.value = t
     refreshToken.value = r
     refreshTokenExpiresAt.value = expiresAt
+    user.value = parseUserFromToken(t) ?? null
     localStorage.setItem(TOKEN_KEY, t)
     localStorage.setItem(REFRESH_KEY, r)
     localStorage.setItem(REFRESH_EXPIRES_KEY, expiresAt)
@@ -39,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
     const res = await authService.login({ email, password })
     if (!res.data?.token) throw new Error(res.message || 'Login failed')
     setTokens(res.data.token, res.data.refreshToken, res.data.refreshTokenExpiresAt)
-    await fetchUser()
+    // await fetchUser()
     return res
   }
 
@@ -47,7 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
     const res = await authService.register({ firstName, lastName, email, password })
     if (!res.data?.token) throw new Error(res.message || 'Registration failed')
     setTokens(res.data.token, res.data.refreshToken, res.data.refreshTokenExpiresAt)
-    await fetchUser()
+    // await fetchUser()
     return res
   }
 

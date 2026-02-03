@@ -15,6 +15,7 @@ public interface IRentARideDbContext
     DbSet<AuditLog> AuditLogs { get; set; }
     DbSet<RefreshToken> RefreshTokens { get; set; }
     DbSet<Invoice> Invoices { get; set; }
+    DbSet<UserExternalAuth> UserExternalAuths { get; set; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     int SaveChanges();
 }

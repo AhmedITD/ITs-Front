@@ -157,3 +157,4 @@ C:\Users\ASUS\Desktop\ITs\Front\RentARide\RentARide.Api\obj\Debug\net8.0\refint\
 C:\Users\ASUS\Desktop\ITs\Front\RentARide\RentARide.Api\obj\Debug\net8.0\RentARide.Api.pdb
 C:\Users\ASUS\Desktop\ITs\Front\RentARide\RentARide.Api\obj\Debug\net8.0\RentARide.Api.genruntimeconfig.cache
 C:\Users\ASUS\Desktop\ITs\Front\RentARide\RentARide.Api\obj\Debug\net8.0\ref\RentARide.Api.dll
+C:\Users\ASUS\Desktop\ITs\Front\RentARide\RentARide.Api\bin\Debug\net8.0\dotnet-tools.json

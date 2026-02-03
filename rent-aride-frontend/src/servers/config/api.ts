@@ -1,9 +1,11 @@
 export const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5022',
-  timeout: 30000,
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 90000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    // Skip Pinggy free-tunnel interstitial so requests reach the API (https://pinggy.io)
+    // 'X-Pinggy-No-Screen': '1',
   },
 } as const
 

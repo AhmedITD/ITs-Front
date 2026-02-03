@@ -1,4 +1,6 @@
-<script></script>
+<script lang="ts">
+  // Same idea as frontend PaymentFinishPage: show status and links
+</script>
 
 <div class="p-4 space-y-4">
   <h1 class="text-xl font-semibold">Payment complete</h1>

@@ -2,13 +2,13 @@ import axios, { type AxiosInstance, type AxiosResponse, type AxiosError } from '
 import { API_CONFIG, HTTP_STATUS, ERROR_MESSAGES } from '../config/api'
 import type { ApiResponse, ApiException, BackendApiResponse } from '@/types/api'
 
-let isRefreshing = false
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+// let isRefreshing = false
+// let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
 
-function processQueue(token: string | null, err: unknown = null) {
-  failedQueue.forEach((p) => (err ? p.reject(err) : p.resolve(token!)))
-  failedQueue = []
-}
+// function processQueue(token: string | null, err: unknown = null) {
+//   failedQueue.forEach((p) => (err ? p.reject(err) : p.resolve(token!)))
+//   failedQueue = []
+// }
 
 function clearAuth() {
   localStorage.removeItem('token')
@@ -41,20 +41,20 @@ export class AxiosClient {
         const originalRequest = err.config as { _retry?: boolean } & NonNullable<AxiosError['config']>
 
         if (err.response?.status === 401 && originalRequest && !originalRequest._retry) {
-          if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-              failedQueue.push({
-                resolve: (token: string) => {
-                  if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${token}`
-                  resolve(this.client(originalRequest))
-                },
-                reject,
-              })
-            })
-          }
+        //   if (isRefreshing) {
+        //     return new Promise((resolve, reject) => {
+        //       failedQueue.push({
+        //         resolve: (token: string) => {
+        //           if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${token}`
+        //           resolve(this.client(originalRequest))
+        //         },
+        //         reject,
+        //       })
+        //     })
+        //   }
 
-          originalRequest._retry = true
-          isRefreshing = true
+          // originalRequest._retry = true
+          // isRefreshing = true
 
           try {
             const refreshToken = localStorage.getItem('refreshToken')
@@ -66,28 +66,29 @@ export class AxiosClient {
 
             const { data } = await axios.post<BackendApiResponse<{ token: string; refreshToken: string; refreshTokenExpiresAt: string }>>(
               `${API_CONFIG.baseURL}/auth/refresh`,
-              { refreshToken }
+              { refreshToken },
+              { headers: API_CONFIG.headers }
             )
             if (data.success && data.data) {
               localStorage.setItem('token', data.data.token)
               localStorage.setItem('refreshToken', data.data.refreshToken)
               localStorage.setItem('refreshTokenExpiresAt', data.data.refreshTokenExpiresAt)
               if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${data.data.token}`
-              processQueue(data.data.token)
+              // processQueue(data.data.token)
               return this.client(originalRequest)
             }
 
-            processQueue(null, err)
-            clearAuth()
-            window.location.href = '/login'
-            return Promise.reject(err)
+            // processQueue(null, err)
+            // clearAuth()
+            // window.location.href = '/login'
+            // return Promise.reject(err)
           } catch {
-            processQueue(null, err)
+            // processQueue(null, err)
             clearAuth()
             window.location.href = '/login'
             return Promise.reject(err)
           } finally {
-            isRefreshing = false
+            // isRefreshing = false
           }
         }
 
@@ -97,19 +98,19 @@ export class AxiosClient {
   }
 
   private transformResponse<T>(response: AxiosResponse<BackendApiResponse<T>>): ApiResponse<T> {
-    const body = response.data
-    const status = response.status
-    if (body && typeof body === 'object' && body.success && body.data !== undefined) {
-      return {
-        data: body.data,
-        status,
-        message: body.message,
-      }
-    }
+    // const body = response.data
+    // const status = response.status
+    // if (body && typeof body === 'object' && body.success && body.data !== undefined) {
+    //   return {
+    //     data: body.data,
+    //     status,
+    //     message: body.message,
+    //   }
+    // }
     return {
-      data: body?.data as T,
-      status,
-      message: body?.message,
+      data: response.data?.data as T,
+      status : response.status as number,
+      message: response.data?.message || '',
     }
   }
 

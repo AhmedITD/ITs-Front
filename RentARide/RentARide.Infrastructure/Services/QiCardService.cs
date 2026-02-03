@@ -49,16 +49,14 @@ public class QiCardService : IQiCardService
     {
         try
         {
-            var appUrl = _configuration["App:Url"] ?? "https://localhost:5001";
-            
             var payload = new
             {
                 requestId = request.RequestId,
                 amount = request.Amount,
                 currency = request.Currency,
                 locale = "en_US",
-                finishPaymentUrl = request.FinishPaymentUrl ?? $"{appUrl}/payment/finish",
-                notificationUrl = request.NotificationUrl ?? $"{appUrl}/api/payments/webhook",
+                finishPaymentUrl = request.FinishPaymentUrl,
+                notificationUrl = request.NotificationUrl,
                 customerInfo = new
                 {
                     firstName = request.CustomerInfo?.FirstName ?? "Customer",

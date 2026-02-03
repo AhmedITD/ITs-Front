@@ -111,11 +111,26 @@ public class VehicleService(
     {
         var query = dbContext.Vehicles
             .AsNoTracking()
-            .Include(v => v.VehicleType)
             .AsQueryable();
 
         if (request.VehicleTypeId.HasValue)
+        {
             query = query.Where(v => v.VehicleTypeId == request.VehicleTypeId.Value);
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(v => v.Status == request.Status.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            query = query.Where(v =>
+                v.LicensePlate.Contains(request.SearchTerm) ||
+                v.Model.Contains(request.SearchTerm));
+        }
+
+        query = query.Include(v => v.VehicleType);
 
         var projected = query.ProjectToType<VehicleDto>();
         var paginated = await PaginatedListResponse<VehicleDto>.CreateAsync(

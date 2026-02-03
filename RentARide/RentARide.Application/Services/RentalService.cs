@@ -189,16 +189,50 @@ public class RentalService(
             : ApiResponse<RentalDto>.ErrorResponse("Failed to create rental.");
     }
 
-    public async Task<ApiResponse<PaginatedListResponse<RentalHistoryItemDto>>> GetMyHistory(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<PaginatedListResponse<RentalHistoryItemDto>>> GetMyHistory(GetMyRentalsRequest request, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Rentals
             .AsNoTracking()
             .Include(r => r.Vehicle)
-            .Where(r => r.UserId == currentUser.Id)
-            .OrderByDescending(r => r.StartDate);
+            .Where(r => r.UserId == currentUser.Id);
+
+        if (request.Status.HasValue)
+            query = query.Where(r => r.Status == request.Status.Value);
+
+        if (request.StartDateFrom.HasValue)
+        {
+            var fromUtc = request.StartDateFrom.Value.ToUtc();
+            query = query.Where(r => r.StartDate >= fromUtc);
+        }
+
+        if (request.StartDateTo.HasValue)
+        {
+            var toEndOfDayUtc = request.StartDateTo.Value.Date.AddDays(1).AddTicks(-1).ToUtc();
+            query = query.Where(r => r.StartDate <= toEndOfDayUtc);
+        }
+
+        if (request.MinPrice.HasValue)
+            query = query.Where(r => r.TotalPrice >= request.MinPrice.Value);
+
+        if (request.MaxPrice.HasValue)
+            query = query.Where(r => r.TotalPrice <= request.MaxPrice.Value);
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var term = request.SearchTerm.Trim();
+            query = query.Where(r =>
+                r.Vehicle.Model.Contains(term) ||
+                r.Vehicle.LicensePlate.Contains(term));
+        }
+
+        query = query.OrderByDescending(r => r.StartDate);
 
         var projected = query.ProjectToType<RentalHistoryItemDto>();
-        var paginated = await PaginatedListResponse<RentalHistoryItemDto>.CreateAsync(projected, pageNumber, pageSize, cancellationToken);
+        var paginated = await PaginatedListResponse<RentalHistoryItemDto>.CreateAsync(
+            projected,
+            request.PageNumber,
+            request.PageSize,
+            cancellationToken);
 
         return ApiResponse<PaginatedListResponse<RentalHistoryItemDto>>.SuccessResponse(paginated);
     }

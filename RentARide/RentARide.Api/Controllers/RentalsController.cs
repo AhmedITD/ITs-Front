@@ -20,7 +20,7 @@ public class RentalsController(IRentalService rentalService) : BaseController
         [FromQuery] GetMyRentalsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var result = await rentalService.GetMyHistory(request.PageNumber, request.PageSize, cancellationToken);
+        var result = await rentalService.GetMyHistory(request, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

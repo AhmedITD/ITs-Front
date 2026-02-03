@@ -7,9 +7,9 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach(async () => {
-  const auth = useAuthStore()
-  if (auth.token && !auth.user) await auth.fetchUser()
-})
+// router.beforeEach(async () => {
+//   const auth = useAuthStore()
+  // if (auth.token && !auth.user) await auth.fetchUser()
+// })
 
 export default router

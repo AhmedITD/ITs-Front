@@ -7,7 +7,7 @@ export async function requireAuth(
   next: NavigationGuardNext
 ) {
   const auth = useAuthStore()
-  if (auth.token && !auth.user) await auth.fetchUser()
+  // if (auth.token && !auth.user) await auth.fetchUser()
   if (!auth.isLoggedIn) return next({ name: 'login', query: { redirect: to.fullPath } })
   next()
 }

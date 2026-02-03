@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using RentARide.Application.Common;
 using RentARide.Application.DTOs.requests.Invoice;
 using RentARide.Application.DTOs.Requests.QiCard;
@@ -18,11 +19,11 @@ public class InvoiceService(
     IRentARideDbContext dbContext,
     ICurrentUser currentUser,
     IQiCardService qiCardService,
-    IPublicHolidayService publicHolidayService
+    IPublicHolidayService publicHolidayService,
+    IConfiguration configuration
 ) : IInvoiceService
 {
-    public async Task<ApiResponse<InvoiceResponse>> CreateInvoice(InvoiceRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<InvoiceResponse>> CreateInvoice(InvoiceRequest request, CancellationToken cancellationToken = default)
     {
         var vehicle = await dbContext.Vehicles
             .Include(v => v.VehicleType)
@@ -93,7 +94,7 @@ public class InvoiceService(
             ? new CustomerInfo { FirstName = user.FirstName, LastName = user.LastName, Email = user.Email }
             : new CustomerInfo { FirstName = "Customer" };
 
-        var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "https://localhost:5001";
+        var appUrl = configuration["APP_URL"];
         var qiCardPaymentRequest = new QiCardPaymentRequest()
         {
             RequestId = invoice.Id.ToString(),

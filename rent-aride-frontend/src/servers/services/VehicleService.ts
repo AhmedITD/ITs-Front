@@ -11,7 +11,7 @@ export class VehicleService {
     return axiosClient.get<VehicleTypeDto[]>(`${this.base}/types`)
   }
 
-  async browse(params: { pageNumber?: number; pageSize?: number; vehicleTypeId?: number }): Promise<ApiResponse<PaginatedList<VehicleDto>>> {
+  async browse(params: { pageNumber?: number; pageSize?: number; vehicleTypeId?: number; status?: string; searchTerm?: string }): Promise<ApiResponse<PaginatedList<VehicleDto>>> {
     return axiosClient.get<PaginatedList<VehicleDto>>(this.base, { params })
   }
 

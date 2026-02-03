@@ -34,6 +34,7 @@ public class AuthController(IAuthService authService) : BaseController
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>Exchange SuperQi auth code for JWT. Returns clear error message if code invalid/expired (resolver returns null).</summary>
     [HttpPost("auth-with-superQi")]
     public async Task<ActionResult<LoginResponse>> AuthWithSuperQi(AuthWithSuperQiRequest request, CancellationToken cancellationToken)
     {

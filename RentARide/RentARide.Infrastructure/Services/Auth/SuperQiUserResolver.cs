@@ -6,10 +6,6 @@ using RentARide.Application.Interfaces.Auth;
 
 namespace RentARide.Infrastructure.Services.Auth;
 
-/// <summary>
-/// Resolves SuperQi auth code to user info by calling a configurable validation URL
-/// or returning a demo user for development.
-/// </summary>
 public class SuperQiUserResolver(
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
@@ -18,19 +14,6 @@ public class SuperQiUserResolver(
     public async Task<SuperQiUserInfo?> ResolveAsync(string authCode, CancellationToken cancellationToken = default)
     {
         var validationUrl = configuration["SuperQi:ValidationUrl"];
-        var useDemoUser = configuration.GetValue<bool>("SuperQi:UseDemoUser");
-
-        if (useDemoUser)
-        {
-            logger.LogInformation("Using SuperQi demo user for auth code");
-            return new SuperQiUserInfo
-            {
-                UserId = "superqi-demo",
-                Email = "superqi-demo@rentaride.local",
-                FirstName = "SuperQi",
-                LastName = "Demo User"
-            };
-        }
 
         if (string.IsNullOrWhiteSpace(validationUrl))
         {
@@ -46,19 +29,7 @@ public class SuperQiUserResolver(
             var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            var userId = GetString(root, "userId") ?? GetString(root, "sub") ?? GetString(root, "id");
-            var email = GetString(root, "email") ?? GetString(root, "data", "email");
-            var firstName = GetString(root, "firstName") ?? GetString(root, "first_name") ?? GetString(root, "data", "firstName");
-            var lastName = GetString(root, "lastName") ?? GetString(root, "last_name") ?? GetString(root, "data", "lastName");
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                var data = root.TryGetProperty("data", out var dataEl) ? dataEl : root;
-                userId = GetString(data, "userId") ?? GetString(data, "sub") ?? GetString(data, "id");
-                email ??= GetString(data, "email");
-                firstName ??= GetString(data, "firstName");
-                lastName ??= GetString(data, "lastName");
-            }
+            var userId = GetString(root, "customerId");
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -69,9 +40,9 @@ public class SuperQiUserResolver(
             return new SuperQiUserInfo
             {
                 UserId = userId,
-                Email = email ?? $"{userId}@superqi.rentaride.local",
-                FirstName = firstName ?? "SuperQi",
-                LastName = lastName ?? "User"
+                Email = $"{userId}@superqi.rentaride.local",
+                FirstName = "SuperQi",
+                LastName = "User"
             };
         }
         catch (Exception ex)

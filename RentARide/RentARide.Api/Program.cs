@@ -6,6 +6,7 @@ using FluentValidation.AspNetCore;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -156,7 +157,7 @@ builder.Services.AddAuthentication(options =>
 //Exception Handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-//CORS
+// CORS: allow all origins
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -187,7 +188,19 @@ using (var scope = app.Services.CreateScope())
     await AdminUserSeeder.SeedAsync(scope.ServiceProvider);
 }
 
-// UseCors first so preflight and cross-origin requests succeed
+// CORS first: add headers to every response and handle OPTIONS preflight so tunnels (Pinggy, zrok, etc.) don't block cross-origin requests
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+    context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    context.Response.Headers.Append("Access-Control-Allow-Headers", "*");
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return;
+    }
+    await next();
+});
 app.UseCors();
 
 // UseSwagger

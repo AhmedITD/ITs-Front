@@ -312,6 +312,37 @@ namespace RentARide.Infrastructure.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("RentARide.Domain.Entities.UserExternalAuth", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ExternalUserId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Provider", "ExternalUserId")
+                        .IsUnique();
+
+                    b.ToTable("UserExternalAuths", (string)null);
+                });
+
             modelBuilder.Entity("RentARide.Domain.Entities.Vehicle", b =>
                 {
                     b.Property<int>("Id")
@@ -439,6 +470,17 @@ namespace RentARide.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("RentARide.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("RentARide.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RentARide.Domain.Entities.UserExternalAuth", b =>
                 {
                     b.HasOne("RentARide.Domain.Entities.User", "User")
                         .WithMany()
