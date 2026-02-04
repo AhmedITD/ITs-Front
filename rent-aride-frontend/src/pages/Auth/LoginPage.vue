@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useLogin } from '@/composables/Auth/useLogin'
+import { useRoute, useRouter } from 'vue-router'
+import { get, generalError, email, password, loading, useLogin } from '@/composables/Auth/useLogin'
 
-const { get, generalError, email, password, loading, handleSubmit } = useLogin()
+const router = useRouter()
+const route = useRoute()
+const { handleSubmit } = useLogin(router, route)
 </script>
 
 <template>

@@ -12,10 +12,6 @@ public class PaymentsController(
     IInvoiceService invoiceService,
     IRentalService rentalService) : ControllerBase
 {
-    /// <summary>
-    /// Webhook endpoint called by Qi when payment status changes.
-    /// No auth - Qi identifies itself via signature in payload.
-    /// </summary>
     [HttpPost("webhook")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -27,7 +23,7 @@ public class PaymentsController(
         if (string.IsNullOrWhiteSpace(body))
             return BadRequest();
 
-        // QiCard message verification: verify signature from header using raw body (https://developers-gate.qi.iq/docs/webhook-guide/message-verification)
+        // (https://developers-gate.qi.iq/docs/webhook-guide/message-verification)
         var signatureFromHeader = Request.Headers["X-Signature"].FirstOrDefault();
         if (!qiCardService.VerifyWebhookSignature(body, signatureFromHeader))
             return Unauthorized();
@@ -41,10 +37,6 @@ public class PaymentsController(
         {
             return BadRequest();
         }
-
-        var verifyResult = await qiCardService.ProcessWebhookAsync(webhookData);
-        if (!verifyResult.Success)
-            return BadRequest(verifyResult.Error);
 
         if (!TryGetRequestId(webhookData, out var requestId) || !Guid.TryParse(requestId, out var invoiceId))
             return Ok(); // Acknowledge to avoid retries; log in production

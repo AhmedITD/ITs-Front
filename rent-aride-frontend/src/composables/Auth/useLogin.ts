@@ -1,20 +1,16 @@
+import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useFormErrors } from '@/utils'
 
-/**
- * Must be called from component setup so useRouter/useRoute run in injection context.
- */
-export function useLogin() {
-  const { setFromApi, get, clear, generalError } = useFormErrors()
-  const route = useRoute()
-  const router = useRouter()
+const { setFromApi, get, clear, generalError } = useFormErrors()
 
-  const email = ref('')
-  const password = ref('')
-  const loading = ref(false)
+const email = ref('')
+const password = ref('')
+const loading = ref(false)
 
+/** Call from component setup with useRouter() and useRoute() so router is in injection context. */
+function useLogin(router: Router, route: RouteLocationNormalizedLoaded) {
   async function handleSubmit() {
     clear()
     loading.value = true
@@ -28,15 +24,11 @@ export function useLogin() {
       loading.value = false
     }
   }
-
-  return {
-    handleSubmit,
-    useAuthStore,
-    get,
-    clear,
-    generalError,
-    email,
-    password,
-    loading,
-  }
+  return { handleSubmit }
 }
+
+// functions
+export { useLogin }
+// stores / form state
+export { useAuthStore, get, clear, generalError }
+export { email, password, loading }

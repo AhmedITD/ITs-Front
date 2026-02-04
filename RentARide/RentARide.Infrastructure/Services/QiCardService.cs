@@ -265,12 +265,12 @@ public class QiCardService : IQiCardService
     {
         var secret = _configuration["QiCard:WebhookSecret"];
         if (string.IsNullOrWhiteSpace(secret))
-            _logger.LogWarning("QiCard webhook secret is not configured");
-            return true; 
+            return false; 
+            // _logger.LogWarning("QiCard webhook secret is not configured");
 
         if (string.IsNullOrWhiteSpace(signatureFromHeader))
-            _logger.LogWarning("QiCard webhook signature is not provided");
             return false;
+            // _logger.LogWarning("QiCard webhook signature is not provided");
 
         var payloadBytes = Encoding.UTF8.GetBytes(rawBody);
         var secretBytes = Encoding.UTF8.GetBytes(secret);
@@ -286,49 +286,7 @@ public class QiCardService : IQiCardService
         return expectedHex.Equals(provided, StringComparison.OrdinalIgnoreCase)
                || expectedBase64.Equals(provided, StringComparison.Ordinal);
     }
-
-    public Task<QiCardResponse> ProcessWebhookAsync(Dictionary<string, object> webhookData)
-    {
-        try
-        {
-            // Verify webhook signature if provided
-            if (webhookData.ContainsKey("signature"))
-            {
-                var isValid = VerifyWebhookSignature(webhookData);
-                if (!isValid)
-                {
-                    _logger.LogError("QiCard Invalid webhook signature webhookData: {webhookData}", webhookData);
-                    
-                    return Task.FromResult(new QiCardResponse
-                    {
-                        Success = false,
-                        Error = "Invalid webhook signature"
-                    });
-                }
-            }
-
-            return Task.FromResult(new QiCardResponse
-            {
-                Success = true,
-                Data = webhookData
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "QiCard webhook processing exception");
-            return Task.FromResult(new QiCardResponse
-            {
-                Success = false,
-                Error = ex.Message
-            });
-        }
-    }
-
-
-    /// <summary>
-    /// Normalizes browser language to meet QiCard API requirements (0-8 characters)
-    /// Extracts the primary language code and truncates if necessary
-    /// </summary>
+    
     private static string NormalizeBrowserLanguage(string? language)
     {
         if (string.IsNullOrWhiteSpace(language))
@@ -348,10 +306,6 @@ public class QiCardService : IQiCardService
         // If empty after processing, default to "en"
         return string.IsNullOrWhiteSpace(primaryLang) ? "en" : primaryLang;
     }
-
-    /// <summary>
-    /// Safely converts a JsonElement to string, handling both string and number types
-    /// </summary>
     private static string? GetStringValue(JsonElement element)
     {
         if (element.ValueKind == JsonValueKind.String)
@@ -374,26 +328,5 @@ public class QiCardService : IQiCardService
         {
             return element.GetRawText();
         }
-    }
-
-    private bool VerifyWebhookSignature(Dictionary<string, object> webhookData)
-    {
-        var secret = _configuration["QiCard:WebhookSecret"];
-        
-        if (!webhookData.ContainsKey("signature") || string.IsNullOrEmpty(secret))
-        {
-            return false;
-        }
-
-        // Example signature verification (adjust based on actual QiCard implementation)
-        var dataJson = JsonSerializer.Serialize(webhookData.GetValueOrDefault("data", new object()));
-        var expectedSignature = Convert.ToHexString(
-            System.Security.Cryptography.HMACSHA256.HashData(
-                Encoding.UTF8.GetBytes(secret),
-                Encoding.UTF8.GetBytes(dataJson)));
-
-        var providedSignature = webhookData["signature"]?.ToString() ?? string.Empty;
-        
-        return expectedSignature.Equals(providedSignature, StringComparison.OrdinalIgnoreCase);
     }
 }

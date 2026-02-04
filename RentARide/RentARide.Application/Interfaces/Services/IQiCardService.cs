@@ -10,5 +10,4 @@ public interface IQiCardService
     Task<QiCardResponse> CancelPaymentAsync(string paymentId);
     /// <summary>Verifies webhook message using raw body and signature from header (QiCard message verification).</summary>
     bool VerifyWebhookSignature(string rawBody, string? signatureFromHeader);
-    Task<QiCardResponse> ProcessWebhookAsync(Dictionary<string, object> webhookData);
 }

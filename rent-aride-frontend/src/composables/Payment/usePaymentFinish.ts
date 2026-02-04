@@ -1,6 +1,21 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+/**
+ * Composable for payment finish page. Must be called from component setup so useRoute() runs in injection context.
+*/
+const route = useRoute()
+const router = useRouter()
+const requestId = computed(() => (route.query?.requestId as string) ?? '')
+const paymentId = computed(() => (route.query?.paymentId as string) ?? '')
+const paymentType = computed(() => (route.query?.paymentType as string) ?? '')
+const status = computed(() => ((route.query?.status as string) ?? '').toUpperCase())
+
+const statusLabel = computed(() => getStatusLabel(status.value))
+const isSuccess = computed(() => isSuccessStatus(status.value))
+const isFailed = computed(() => isFailedStatus(status.value))
+
+
 function getStatusLabel(statusVal: string | undefined): string {
   switch (statusVal) {
     case 'SUCCESS':
@@ -21,30 +36,15 @@ function isFailedStatus(statusVal: string): boolean {
   return !!statusVal && statusVal !== 'SUCCESS'
 }
 
-/**
- * Composable for payment finish page. Must be called from component setup so useRoute/useRouter run in injection context.
- */
+function goToRentals() {
+  router.push({ name: 'rentals' })
+}
+
+function goHome() {
+  router.push({ name: 'home' })
+}
+
 export default function usePaymentFinish() {
-  const route = useRoute()
-  const router = useRouter()
-
-  const requestId = computed(() => (route.query?.requestId as string) ?? '')
-  const paymentId = computed(() => (route.query?.paymentId as string) ?? '')
-  const paymentType = computed(() => (route.query?.paymentType as string) ?? '')
-  const status = computed(() => ((route.query?.status as string) ?? '').toUpperCase())
-
-  const statusLabel = computed(() => getStatusLabel(status.value))
-  const isSuccess = computed(() => isSuccessStatus(status.value))
-  const isFailed = computed(() => isFailedStatus(status.value))
-
-  function goToRentals() {
-    router.push({ name: 'rentals' })
-  }
-
-  function goHome() {
-    router.push({ name: 'home' })
-  }
-
   return {
     requestId,
     paymentId,
