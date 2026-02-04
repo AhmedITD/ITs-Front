@@ -8,44 +8,70 @@
     pageIndex,
     pageSize,
     vehicleTypeId,
+    vehicleStatus,
     searchQuery,
     loading,
     loadingTypes,
-    loadTypes,
     loadVehicles,
     initVehicles,
-  } from '../lib/vehicles.js'
+    book,
+  } from '../lib/composables/vehicle/useVehicles.js'
   import { formatCurrency } from '../lib/utils/index.js'
-  import type { VehicleDto } from '../lib/types/vehicle.js'
 
   onMount(() => initVehicles(10))
 
   $: if (!$loadingTypes) {
     $vehicleTypeId
+    $vehicleStatus
     $pageIndex
     $searchQuery
     loadVehicles()
   }
 
-  function book(vehicle: VehicleDto) {
-    push('/book?vehicleId=' + vehicle.id)
+  function goToBook(path: string) {
+    push(path)
   }
 </script>
 
 <div class="p-4 space-y-4">
   <h1 class="text-xl font-semibold">Browse vehicles</h1>
-  <div class="flex gap-4 items-center flex-wrap">
-    <label for="type" class="text-sm">Vehicle type</label>
-    <select
-      id="type"
-      bind:value={$vehicleTypeId}
-      class="rounded-md border border-gray-300 px-3 py-2 text-sm flex-1 min-w-[140px]"
-    >
-      <option value="">All</option>
-      {#each $types as t}
-        <option value={t.id}>{t.name}</option>
-      {/each}
-    </select>
+  <div class="flex flex-wrap items-end gap-4">
+    <div class="min-w-[200px] max-w-xs flex-1">
+      <label for="search" class="mb-1 block text-sm font-medium text-gray-700">Search</label>
+      <input
+        id="search"
+        type="search"
+        placeholder="Search vehicles…"
+        bind:value={$searchQuery}
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+      />
+    </div>
+    <div class="min-w-[140px]">
+      <label for="status" class="mb-1 block text-sm font-medium text-gray-700">Status</label>
+      <select
+        id="status"
+        bind:value={$vehicleStatus}
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+      >
+        <option value={undefined}>All</option>
+        <option value="Available">Available</option>
+        <option value="Rented">Rented</option>
+        <option value="Maintenance">Maintenance</option>
+      </select>
+    </div>
+    <div class="min-w-[140px]">
+      <label for="type" class="mb-1 block text-sm font-medium text-gray-700">Type</label>
+      <select
+        id="type"
+        bind:value={$vehicleTypeId}
+        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+      >
+        <option value="">All</option>
+        {#each $types as t}
+          <option value={t.id}>{t.name}</option>
+        {/each}
+      </select>
+    </div>
   </div>
   {#if $loading}
     <p class="py-8 text-center text-gray-500">Loading…</p>
@@ -65,7 +91,7 @@
             type="button"
             class="mt-3 w-full rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={v.status !== 'Available'}
-            on:click={() => book(v)}
+            on:click={() => goToBook(book(v))}
           >
             Book
           </button>

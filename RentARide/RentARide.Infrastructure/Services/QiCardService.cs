@@ -171,17 +171,17 @@ public class QiCardService : IQiCardService
             if (response.IsSuccessStatusCode)
             {
                 var responseData = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                
+
                 _logger.LogInformation("QiCard payment verification successful. Response: {Response}", responseBody);
-                
+
                 return new QiCardResponse
                 {
                     Success = true,
                     Data = responseData,
-                    PaymentId = responseData.TryGetProperty("paymentId", out var pid) 
-                        ? GetStringValue(pid) 
-                        : responseData.TryGetProperty("id", out var id) 
-                            ? GetStringValue(id) 
+                    PaymentId = responseData.TryGetProperty("paymentId", out var pid)
+                        ? GetStringValue(pid)
+                        : responseData.TryGetProperty("id", out var id)
+                            ? GetStringValue(id)
                             : paymentId
                 };
             }
@@ -259,6 +259,32 @@ public class QiCardService : IQiCardService
                 Error = ex.Message
             };
         }
+    }
+
+    public bool VerifyWebhookSignature(string rawBody, string? signatureFromHeader)
+    {
+        var secret = _configuration["QiCard:WebhookSecret"];
+        if (string.IsNullOrWhiteSpace(secret))
+            _logger.LogWarning("QiCard webhook secret is not configured");
+            return true; 
+
+        if (string.IsNullOrWhiteSpace(signatureFromHeader))
+            _logger.LogWarning("QiCard webhook signature is not provided");
+            return false;
+
+        var payloadBytes = Encoding.UTF8.GetBytes(rawBody);
+        var secretBytes = Encoding.UTF8.GetBytes(secret);
+        var hash = System.Security.Cryptography.HMACSHA256.HashData(secretBytes, payloadBytes);
+
+        var expectedHex = Convert.ToHexString(hash);
+        var expectedBase64 = Convert.ToBase64String(hash);
+
+        var provided = signatureFromHeader.Trim();
+        if (provided.StartsWith("sha256=", StringComparison.OrdinalIgnoreCase))
+            provided = provided.Substring(7).Trim();
+
+        return expectedHex.Equals(provided, StringComparison.OrdinalIgnoreCase)
+               || expectedBase64.Equals(provided, StringComparison.Ordinal);
     }
 
     public Task<QiCardResponse> ProcessWebhookAsync(Dictionary<string, object> webhookData)

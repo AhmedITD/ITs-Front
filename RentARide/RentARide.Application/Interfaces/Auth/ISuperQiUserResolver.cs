@@ -17,4 +17,10 @@ public class SuperQiUserInfo
     public string? Email { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
+    
+    /// <summary>Alipay+ access token (when resolved via Alipay service).</summary>
+    public string? AccessToken { get; set; }
+    
+    /// <summary>Alipay+ customer ID (when resolved via Alipay service).</summary>
+    public string? CustomerId { get; set; }
 }

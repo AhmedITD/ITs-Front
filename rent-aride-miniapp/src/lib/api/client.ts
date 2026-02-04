@@ -1,16 +1,14 @@
 import { get } from 'svelte/store'
 import { auth } from '../stores/auth.js'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5022'
-
 function buildUrl(path: string): string {
-  const base = API_BASE.replace(/\/$/, '')
+  const base = import.meta.env.VITE_API_URL
   const p = path.startsWith('/') ? path : '/' + path
   return base + p
 }
 
 export interface ApiParams {
-  [key: string]: string | number | undefined | null
+  [key: string]: string
 }
 
 async function request(

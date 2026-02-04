@@ -2,11 +2,11 @@
  * Create rental flow: state + loadFormData, onSubmit, toggleAmenity (same idea as frontend useCreateRental).
  */
 import { writable, get } from 'svelte/store'
-import * as vehiclesApi from './api/vehicles.js'
-import * as amenitiesApi from './api/amenities.js'
-import * as rentalsApi from './api/rentals.js'
-import type { VehicleDto } from './types/vehicle.js'
-import type { AmenityDto } from './types/amenity.js'
+import * as vehiclesApi from '../../api/vehicles.js'
+import * as amenitiesApi from '../../api/amenities.js'
+import * as rentalsApi from '../../api/rentals.js'
+import type { VehicleDto } from '../../types/vehicle.js'
+import type { AmenityDto } from '../../types/amenity.js'
 
 export const vehicles = writable<VehicleDto[]>([])
 export const amenities = writable<AmenityDto[]>([])
@@ -20,6 +20,12 @@ export const generalError = writable('')
 
 function toUtcIso(dateOnly: string, endOfDay: boolean): string {
   return endOfDay ? `${dateOnly}T23:59:59.999Z` : `${dateOnly}T00:00:00.000Z`
+}
+
+/** Same concept as frontend initCreateRental: set vehicle from query and load form data. */
+export async function initCreateRental(vehicleIdFromQuery: number | null): Promise<void> {
+  if (vehicleIdFromQuery != null) selectedVehicleId.set(vehicleIdFromQuery)
+  await loadFormData(vehicleIdFromQuery)
 }
 
 export async function loadFormData(vehicleIdFromQuery: number | null): Promise<void> {

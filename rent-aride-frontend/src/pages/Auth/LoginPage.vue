@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { get, generalError, email, password, loading, handleSubmit } from '@/composables/Auth/useLogin'
+import { useLogin } from '@/composables/Auth/useLogin'
 
-
+const { get, generalError, email, password, loading, handleSubmit } = useLogin()
 </script>
 
 <template>

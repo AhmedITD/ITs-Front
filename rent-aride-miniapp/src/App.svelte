@@ -5,6 +5,7 @@
   import Book from './routes/Book.svelte'
   import Rentals from './routes/Rentals.svelte'
   import PaymentFinish from './routes/PaymentFinish.svelte'
+  import Debug from './routes/Debug.svelte'
   import { auth, authError, clearAuthError, logout } from './lib/stores/auth.js'
 
 
@@ -13,6 +14,7 @@
     '/book': Book,
     '/rentals': Rentals,
     '/payment/finish': PaymentFinish,
+    '/debug': Debug,
   }
 </script>
 
@@ -37,6 +39,7 @@
       <a href="#/" class="text-white/90 hover:text-white text-sm">Browse</a>
       <a href="#/book" class="text-white/90 hover:text-white text-sm">Book</a>
       <a href="#/rentals" class="text-white/90 hover:text-white text-sm">My rentals</a>
+      <a href="#/debug" class="text-white/90 hover:text-white text-sm">Debug</a>
       {#if $auth?.token}
         <button
           type="button"

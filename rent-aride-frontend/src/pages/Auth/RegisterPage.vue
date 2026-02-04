@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import {
+import { useRegister } from '@/composables/Auth/useRegister'
+
+const {
   get,
   generalError,
   firstName,
@@ -8,8 +10,7 @@ import {
   password,
   loading,
   handleSubmit,
-} from '@/composables/Auth/useRegister'
-
+} = useRegister()
 </script>
 
 <template>

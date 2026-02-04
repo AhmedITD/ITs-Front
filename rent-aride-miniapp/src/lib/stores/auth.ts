@@ -3,7 +3,7 @@
  * Doc: https://superqi-dev-docs.pages.dev/api-reference/flows/authentication
  */
 import { writable } from 'svelte/store'
-import { getAuthCode, authWithSuperQi } from '../bridge/index.js'
+// import { getAuthCode, authWithSuperQi } from '../bridge/index.js'
 
 const AUTH_KEY = 'rentaride_miniapp_auth'
 

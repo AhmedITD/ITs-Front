@@ -9,6 +9,7 @@ import {
   pageIndex,
   pageSize,
   vehicleTypeId,
+  vehicleStatus,
   searchQuery,
   loading,
   loadingTypes,
@@ -16,7 +17,8 @@ import {
   loadVehicles,
   setPageSize,
   resetToFirstPage,
-} from './stores/vehicle.js'
+} from '../../stores/vehicle.js'
+import type { VehicleDto } from '../../types/vehicle.js'
 
 export {
   types,
@@ -26,6 +28,7 @@ export {
   pageIndex,
   pageSize,
   vehicleTypeId,
+  vehicleStatus,
   searchQuery,
   loading,
   loadingTypes,
@@ -38,4 +41,9 @@ export {
 export function initVehicles(initialPageSize = 10): Promise<void> {
   setPageSize(initialPageSize)
   return loadTypes()
+}
+
+/** Navigate to book page with vehicle pre-selected (same concept as frontend book(vehicle)). */
+export function book(vehicle: VehicleDto): string {
+  return `/book?vehicleId=${vehicle.id}`
 }

@@ -10,6 +10,8 @@ export const pageIndex = writable(1)
 export const pageSize = writable(10)
 /** Bound to select: '' for "All", number for type id. */
 export const vehicleTypeId = writable<number | string | undefined>(undefined)
+/** Status filter: undefined | 'Available' | etc. Same concept as frontend vehicleStatus. */
+export const vehicleStatus = writable<string | undefined>(undefined)
 export const searchQuery = writable('')
 export const loading = writable(false)
 export const loadingTypes = writable(true)
@@ -33,9 +35,10 @@ export async function loadVehicles(): Promise<void> {
       pageNumber: get(pageIndex),
       pageSize: get(pageSize),
       vehicleTypeId: (() => {
-      const v = get(vehicleTypeId)
-      return v === '' || v == null ? undefined : Number(v)
-    })(),
+        const v = get(vehicleTypeId)
+        return v === '' || v == null ? undefined : Number(v)
+      })(),
+      status: get(vehicleStatus) ?? undefined,
       searchTerm: get(searchQuery)?.trim() || undefined,
     })
     vehicles.set(res.items)

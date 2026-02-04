@@ -39,13 +39,6 @@ export async function getMyHistory(
   if (params.maxPrice != null) q.maxPrice = params.maxPrice
   if (params.searchTerm) q.searchTerm = params.searchTerm
 
-  const res = (await getApi('/rentals/my-history', q)) as
-    | { data?: PaginatedList<RentalHistoryItemDto> }
-    | PaginatedList<RentalHistoryItemDto>
-  const data = (res as { data?: PaginatedList<RentalHistoryItemDto> })?.data ?? res
-  return {
-    items: (data as PaginatedList<RentalHistoryItemDto>)?.items ?? [],
-    totalCount: (data as PaginatedList<RentalHistoryItemDto>)?.totalCount ?? 0,
-    totalPages: (data as PaginatedList<RentalHistoryItemDto>)?.totalPages ?? 0,
-  }
+  const res = (await getApi('/rentals/my-history', q)) as { data?: PaginatedList<RentalHistoryItemDto> }
+  return res.data ?? { items: [], totalCount: 0, totalPages: 0 }
 }

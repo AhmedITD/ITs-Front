@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { vehicleStore, initVehicles , book } from '@/composables/Vehicle/useVehicles'
+import { vehicleStore, initVehicles, book } from '@/composables/Vehicle/useVehicles'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import Pagination from '@/components/shared/Pagination.vue'
 import SercchBar from '@/components/shared/SercchBar.vue'
@@ -10,7 +11,7 @@ import TypeFilter from '@/components/shared/Filters/Vechile/TypeFilter.vue'
 import type { VehicleDto } from '@/types/vehicle'
 import VehicleCard from '@/components/shared/VehicleCard.vue'
 
-
+const router = useRouter()
 const {
   types,
   vehicles,
@@ -24,6 +25,10 @@ const {
   loading,
 } = storeToRefs(vehicleStore)
 
+function onBook(vehicle: VehicleDto) {
+  router.push(book(vehicle))
+}
+
 let stopWatcher: (() => void) | undefined
 onMounted(() => {
   stopWatcher = initVehicles(10)
@@ -31,8 +36,6 @@ onMounted(() => {
 onUnmounted(() => {
   stopWatcher?.()
 })
-
-
 </script>
 
 <template>
@@ -53,7 +56,7 @@ onUnmounted(() => {
       <VehicleCard 
         v-for="vehicle in vehicles" :key="vehicle.id" 
         :vehicle="vehicle"
-        @book="book"
+        @book="onBook"
       />
     </div>
     <Pagination

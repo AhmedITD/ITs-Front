@@ -19,12 +19,18 @@ public class PaymentsController(
     [HttpPost("webhook")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
     public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(body))
             return BadRequest();
+
+        // QiCard message verification: verify signature from header using raw body (https://developers-gate.qi.iq/docs/webhook-guide/message-verification)
+        var signatureFromHeader = Request.Headers["X-Signature"].FirstOrDefault();
+        if (!qiCardService.VerifyWebhookSignature(body, signatureFromHeader))
+            return Unauthorized();
 
         Dictionary<string, object>? webhookData;
         try

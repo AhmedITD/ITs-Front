@@ -98,6 +98,10 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
 builder.Services.AddScoped<IQiCardService, QiCardService>();
 
+// SuperQi Alipay+ Services
+builder.Services.AddHttpClient<ISuperQiAlipayService, RentARide.Infrastructure.Services.SuperQi.SuperQiAlipayService>();
+builder.Services.AddScoped<ISuperQiMiniAppService, RentARide.Application.Services.SuperQiMiniAppService>();
+
 //Audit Log Services
 builder.Services.AddScoped<AuditLogInterceptor>();
 builder.Services.AddScoped<IAuditLogSink, EfCoreAuditLogSink>();
@@ -119,8 +123,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-builder.Services.AddScoped<ISuperQiUserResolver, SuperQiUserResolver>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<ISuperQiUserResolver, SuperQiUserResolver>();
 
 //Policies
 builder.Services.AddAuthorization(options =>
