@@ -1,5 +1,5 @@
 using FluentValidation;
-using RentARide.Application.DTOs.Requests.RentalRequest;
+using RentARide.Application.DTOs.requests.RentalRequest;
 
 namespace RentARide.Application.Validators.Rental;
 

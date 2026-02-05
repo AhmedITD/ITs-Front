@@ -1,5 +1,5 @@
 using RentARide.Application.DTOs.requests.Invoice;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 using RentARide.Application.DTOs.responses.Invoice;
 
 namespace RentARide.Application.Interfaces.Services;

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Identity.Data;
 using RentARide.Application.Common;
-using RentARide.Application.DTOs.Requests.AuthRequest;
-using RentARide.Application.DTOs.Responses.AuthResponse;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.requests.AuthRequest;
+using RentARide.Application.DTOs.responses.AuthResponse;
+using RentARide.Application.DTOs.responses.Common;
 using RentARide.Domain.Entities;
-using LoginRequest = RentARide.Application.DTOs.Requests.AuthRequest.LoginRequest;
-using RegisterRequest = RentARide.Application.DTOs.Requests.AuthRequest.RegisterRequest;
+using LoginRequest = RentARide.Application.DTOs.requests.AuthRequest.LoginRequest;
+using RegisterRequest = RentARide.Application.DTOs.requests.AuthRequest.RegisterRequest;
 
 namespace RentARide.Application.Interfaces.Auth;
 

@@ -19,7 +19,7 @@
     load,
     initRents,
     resetToFirstPage,
-  } from '../lib/composables/rent/useRents.js'
+  } from '../lib/composables/useRents.js'
   import { formatCurrency, formatDate } from '../lib/utils/index.js'
 
   let authChecked = false

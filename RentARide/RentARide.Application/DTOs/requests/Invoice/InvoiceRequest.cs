@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using RentARide.Application.DTOs.Requests.QiCard;
-using RentARide.Application.DTOs.Requests.RentalRequest;
+using RentARide.Application.DTOs.requests.QiCard;
+using RentARide.Application.DTOs.requests.RentalRequest;
 
 namespace RentARide.Application.DTOs.requests.Invoice;
 

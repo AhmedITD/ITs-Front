@@ -1,6 +1,7 @@
 import { writable, get, derived } from 'svelte/store'
-import * as rentalsApi from '../api/rentals.js'
+import { rentalService } from '../servers/services/RentalService.js'
 import type { RentalHistoryItemDto } from '../types/rental.js'
+import type { ApiException } from '../types/api.js'
 
 export type FilterErrors = {
   general?: string
@@ -36,8 +37,7 @@ export const rangeStart = derived([pageIndex, pageSize], ([$pageIndex, $pageSize
 )
 export const rangeEnd = derived(
   [pageIndex, pageSize, totalCount],
-  ([$pageIndex, $pageSize, $totalCount]) =>
-    Math.min($pageIndex * $pageSize, $totalCount)
+  ([$pageIndex, $pageSize, $totalCount]) => Math.min($pageIndex * $pageSize, $totalCount)
 )
 export const showingText = derived(
   [rangeStart, rangeEnd, totalCount],
@@ -84,7 +84,7 @@ export async function load(): Promise<void> {
   if (!validateFilters()) return
   loading.set(true)
   try {
-    const res = await rentalsApi.getMyHistory({
+    const res = await rentalService.getMyHistory({
       pageNumber: get(pageIndex),
       pageSize: get(pageSize),
       status: get(statusFilter) ?? undefined,
@@ -94,14 +94,16 @@ export async function load(): Promise<void> {
       maxPrice: get(maxPriceFilter),
       searchTerm: get(searchQuery)?.trim() || undefined,
     })
-    items.set(res.items)
-    totalPages.set(res.totalPages)
-    totalCount.set(res.totalCount)
-  } catch (err: unknown) {
-    const e = err as { message?: string; errors?: Record<string, string[]> }
-    const errors = e?.errors ?? {}
+    if (res.data) {
+      items.set(res.data.items ?? [])
+      totalPages.set(res.data.totalPages ?? 0)
+      totalCount.set(res.data.totalCount ?? 0)
+    }
+  } catch (err) {
+    const e = err as ApiException
+    const errors = e.errors ?? {}
     filterErrors.set({
-      general: e?.message,
+      general: e.message,
       startDateFrom: getFieldError(errors, 'StartDateFrom'),
       startDateTo: getFieldError(errors, 'StartDateTo'),
       minPrice: getFieldError(errors, 'MinPrice'),

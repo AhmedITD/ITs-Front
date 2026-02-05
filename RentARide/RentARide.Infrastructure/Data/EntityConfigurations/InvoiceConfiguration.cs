@@ -20,6 +20,8 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(x => x.Currency).IsRequired().HasMaxLength(3);
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.QiPaymentId).HasMaxLength(100);
+        builder.Property(x => x.SuperQiPaymentId).HasMaxLength(100);
+        builder.Property(x => x.SuperQiPaymentRequestId).HasMaxLength(100);
 
         builder.HasOne(x => x.User)
             .WithMany()

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using RentARide.Application.Common;
-using RentARide.Application.DTOs.Requests.RentalRequest;
-using RentARide.Application.DTOs.Responses.RentalResponse;
+using RentARide.Application.DTOs.requests.RentalRequest;
+using RentARide.Application.DTOs.responses.RentalResponse;
 using RentARide.Application.Interfaces;
 using RentARide.Application.Interfaces.Auth;
 using RentARide.Application.Interfaces.Services;
@@ -9,7 +9,7 @@ using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Mapster;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 
 namespace RentARide.Application.Services;
 

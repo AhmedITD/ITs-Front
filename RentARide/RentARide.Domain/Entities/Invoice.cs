@@ -15,6 +15,8 @@ public class Invoice : ISoftDeletable , IAuditable
     public string Currency { get; set; } = "IQD";
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public string? QiPaymentId { get; set; }
+    public string? SuperQiPaymentId { get; set; }
+    public string? SuperQiPaymentRequestId { get; set; }
     public DateTime? PaidAt { get; set; }
     public bool IsDeleted { get; set; } = false;
     public DateTime? DeletedAt { get; set; }

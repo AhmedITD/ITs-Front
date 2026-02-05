@@ -1,4 +1,4 @@
-using RentARide.Application.DTOs.Responses.VehicleResponse;
+using RentARide.Application.DTOs.responses.VehicleResponse;
 using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Mapster;

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentARide.Api.Common;
-using RentARide.Application.DTOs.Requests.QiCard;
+using RentARide.Application.DTOs.requests.QiCard;
 using RentARide.Application.DTOs.requests.Invoice;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 using RentARide.Application.DTOs.responses.Invoice;
 using RentARide.Application.Interfaces.Services;
 

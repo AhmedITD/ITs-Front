@@ -10,3 +10,6 @@ export function formatCurrency(amount: number): string {
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
+
+export { useFormErrors } from './useFormErrors.js'
+export type { ApiErrorLike } from './useFormErrors.js'

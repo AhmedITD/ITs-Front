@@ -1,24 +1,17 @@
 <script lang="ts">
-  import { push } from 'svelte-spa-router'
-  import {
-    getPaymentFinishQuery,
-    getStatusLabel,
-    isSuccessStatus,
-    isFailedStatus,
-  } from '../lib/composables/payment/usePaymentFinish.js'
+  import usePaymentFinish from '../lib/composables/usePaymentFinish.js'
 
-  const { requestId, paymentId, paymentType, status } = getPaymentFinishQuery()
-  const statusLabel = getStatusLabel(status)
-  const isSuccess = isSuccessStatus(status)
-  const isFailed = isFailedStatus(status)
-
-  function goToRentals(): void {
-    push('/rentals')
-  }
-
-  function goHome(): void {
-    push('/')
-  }
+  const {
+    requestId,
+    paymentId,
+    paymentType,
+    statusLabel,
+    status,
+    isSuccess,
+    isFailed,
+    goToRentals,
+    goHome,
+  } = usePaymentFinish()
 </script>
 
 <div class="p-4 mx-auto max-w-lg space-y-6">

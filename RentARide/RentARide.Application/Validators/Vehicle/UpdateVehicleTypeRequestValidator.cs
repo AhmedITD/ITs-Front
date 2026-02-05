@@ -1,5 +1,5 @@
 using FluentValidation;
-using RentARide.Application.DTOs.Requests.VehicleRequest;
+using RentARide.Application.DTOs.requests.VehicleRequest;
 
 namespace RentARide.Application.Validators.Vehicle;
 

@@ -15,7 +15,7 @@
     initCreateRental,
     onSubmit,
     toggleAmenity,
-  } from '../lib/composables/rent/useCreateRental.js'
+  } from '../lib/composables/useCreateRental.js'
   import { tradePayWithUrl, alert } from '../lib/bridge/index.js'
   import { formatCurrency } from '../lib/utils/index.js'
 

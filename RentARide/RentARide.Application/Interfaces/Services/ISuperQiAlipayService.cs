@@ -1,5 +1,5 @@
-using RentARide.Application.DTOs.Requests.SuperQi;
-using RentARide.Application.DTOs.Responses.SuperQi;
+using RentARide.Application.DTOs.requests.SuperQi;
+using RentARide.Application.DTOs.responses.SuperQi;
 
 namespace RentARide.Application.Interfaces.Services;
 
@@ -35,4 +35,10 @@ public interface ISuperQiAlipayService
     
     /// <summary>Prepare authorization for agreement payment (/v1/authorizations/prepare).</summary>
     Task<AlipayPrepareAuthResponse> PrepareAuthorizationAsync(string contractDescription, CancellationToken ct = default);
+
+    /// <summary>Verifies the signature of an incoming Alipay+ webhook notification. Returns true if valid or when verification is skipped (e.g. no public key).</summary>
+    bool VerifyWebhookSignature(string requestPath, string requestBody, string? clientId, string? requestTime, string? signatureHeader);
+
+    /// <summary>Creates a signed response for Alipay+ webhook acknowledgment. Returns (responseBody, responseTime, signature, clientId).</summary>
+    (string ResponseBody, string ResponseTime, string Signature, string ClientId) CreateSignedWebhookResponse(string responseBody);
 }

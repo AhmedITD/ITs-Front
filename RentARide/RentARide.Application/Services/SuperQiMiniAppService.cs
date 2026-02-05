@@ -1,34 +1,37 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using RentARide.Application.DTOs.Requests.SuperQi;
-using RentARide.Application.DTOs.Responses.Common;
-using RentARide.Application.DTOs.Responses.SuperQi;
+using RentARide.Application.DTOs.requests.SuperQi;
+using RentARide.Application.DTOs.responses.Common;
+using RentARide.Application.DTOs.responses.SuperQi;
+using RentARide.Application.Interfaces;
 using RentARide.Application.Interfaces.Services;
+using RentARide.Domain.Enums;
 
 namespace RentARide.Application.Services;
 
-/// <summary>
-/// SuperQi MiniApp business logic service.
-/// Port of backend-node/src/api endpoints.
-/// </summary>
 public class SuperQiMiniAppService : ISuperQiMiniAppService
 {
     private readonly ISuperQiAlipayService _alipayService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<SuperQiMiniAppService> _logger;
+    private readonly IRentARideDbContext _dbContext;
 
     // Product codes from SuperQiConstants
     private const string ONLINE_PURCHASE = "51051000101000000011";
     private const string AGREEMENT_PAYMENT = "51051000101000100031";
+    private const string SUPERQI_WEBHOOK_PATH = "/api/payments/superqi-webhook";
 
     public SuperQiMiniAppService(
         ISuperQiAlipayService alipayService,
         IConfiguration configuration,
-        ILogger<SuperQiMiniAppService> logger)
+        ILogger<SuperQiMiniAppService> logger,
+        IRentARideDbContext dbContext)
     {
         _alipayService = alipayService;
         _configuration = configuration;
         _logger = logger;
+        _dbContext = dbContext;
     }
 
     public async Task<ApiResponse<SuperQiPaymentResponse>> CreatePaymentAsync(string userId, CancellationToken ct = default)
@@ -39,7 +42,7 @@ public class SuperQiMiniAppService : ISuperQiMiniAppService
         {
             var paymentRequestId = $"PAY-{Guid.NewGuid()}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
             var expiryTime = DateTime.UtcNow.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:sszzz").Replace("+00:00", "+00:00");
-            var baseUrl = _configuration["APP_URL"] ?? "http://localhost:5022";
+            var baseUrl = _configuration["APP_URL"];
 
             var paymentRequest = new AlipayPaymentRequest
             {
@@ -59,7 +62,8 @@ public class SuperQiMiniAppService : ISuperQiMiniAppService
                     }
                 },
                 PaymentExpiryTime = expiryTime,
-                PaymentRedirectUrl = baseUrl + "/payment-success"
+                PaymentRedirectUrl = baseUrl + "/payment-redirect",
+                PaymentNotifyUrl = baseUrl + SUPERQI_WEBHOOK_PATH
             };
 
             _logger.LogInformation("[SuperQiMiniApp] Payment request: {RequestId}", paymentRequestId);
@@ -301,16 +305,36 @@ public class SuperQiMiniAppService : ISuperQiMiniAppService
     }
 
     public async Task<ApiResponse<SuperQiPaymentResponse>> ExecuteAgreementPaymentAsync(
-        string accessToken, string customerId, decimal amount, string currency, string orderDescription, CancellationToken ct = default)
+        SuperQiAgreementPayRequest request, CancellationToken ct = default)
     {
-        _logger.LogInformation("[SuperQiMiniApp] Executing agreement payment: CustomerId={CustomerId}, Amount={Amount}", customerId, amount);
+        _logger.LogInformation("[SuperQiMiniApp] Executing agreement payment: CustomerId={CustomerId}, Amount={Amount}, InvoiceId={InvoiceId}", request.CustomerId, request.Amount, request.InvoiceId);
 
-        if (amount <= 0)
+        if (request.Amount <= 0)
             return ApiResponse<SuperQiPaymentResponse>.ErrorResponse("Payment amount must be greater than 0");
+
+        Domain.Entities.Invoice? invoice = null;
+        if (request.InvoiceId.HasValue)
+        {
+            invoice = await _dbContext.Invoices
+                .FirstOrDefaultAsync(i => i.Id == request.InvoiceId.Value, ct);
+            if (invoice == null)
+                return ApiResponse<SuperQiPaymentResponse>.ErrorResponse("Invoice not found.");
+            if (invoice.Status == InvoiceStatus.Paid)
+                return ApiResponse<SuperQiPaymentResponse>.ErrorResponse("Invoice is already paid.");
+        }
+
+        var amount = invoice?.TotalAmount ?? request.Amount;
+        var currency = "IQD";
+        var orderDescription = request.OrderDescription ?? (invoice != null
+            ? $"RentARide Invoice {invoice.Id}"
+            : "Agreement payment");
+
+        var paymentRequestId = request.InvoiceId.HasValue
+            ? $"INV-{request.InvoiceId.Value}"
+            : $"AGREEMENT-PAY-{Guid.NewGuid()}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
         try
         {
-            var paymentRequestId = $"AGREEMENT-PAY-{Guid.NewGuid()}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
             var expiryTime = DateTime.UtcNow.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:sszzz").Replace("+00:00", "+00:00");
             var baseUrl = _configuration["APP_URL"] ?? "http://localhost:5022";
 
@@ -318,22 +342,22 @@ public class SuperQiMiniAppService : ISuperQiMiniAppService
             {
                 ProductCode = AGREEMENT_PAYMENT,
                 PaymentRequestId = paymentRequestId,
-                PaymentAuthCode = accessToken,
+                PaymentAuthCode = request.AccessToken,
                 PaymentAmount = new AlipayAmount
                 {
-                    Currency = currency ?? "IQD",
+                    Currency = currency,
                     Value = amount.ToString("0")
                 },
                 Order = new AlipayOrder
                 {
-                    OrderDescription = orderDescription ?? "Agreement payment - Monthly subscription",
+                    OrderDescription = orderDescription,
                     Buyer = new AlipayBuyer
                     {
-                        ReferenceBuyerId = customerId
+                        ReferenceBuyerId = request.CustomerId
                     }
                 },
                 PaymentExpiryTime = expiryTime,
-                PaymentNotifyUrl = baseUrl + "/api/payments/webhook"
+                PaymentNotifyUrl = baseUrl + SUPERQI_WEBHOOK_PATH
             };
 
             var paymentResponse = await _alipayService.PayAsync(paymentRequest, ct);
@@ -348,7 +372,13 @@ public class SuperQiMiniAppService : ISuperQiMiniAppService
             {
                 case "S":
                     response.Success = true;
-                    _logger.LogInformation("[SuperQiMiniApp] Agreement payment completed: {PaymentId}", paymentResponse.PaymentId);
+                    if (invoice != null)
+                    {
+                        invoice.SuperQiPaymentId = paymentResponse.PaymentId;
+                        invoice.SuperQiPaymentRequestId = paymentRequestId;
+                        await _dbContext.SaveChangesAsync(ct);
+                    }
+                    _logger.LogInformation("[SuperQiMiniApp] Agreement payment completed: {PaymentId}, InvoiceId={InvoiceId}", paymentResponse.PaymentId, request.InvoiceId);
                     break;
                 case "U":
                     response.Success = false;
@@ -369,6 +399,87 @@ public class SuperQiMiniAppService : ISuperQiMiniAppService
         catch (Exception ex)
         {
             _logger.LogError(ex, "[SuperQiMiniApp] Agreement payment failed");
+            return ApiResponse<SuperQiPaymentResponse>.ErrorResponse(ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse<SuperQiPaymentResponse>> CreatePaymentForInvoiceAsync(Guid invoiceId, string finishPaymentUrl, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[SuperQiMiniApp] Creating payment for invoice: {InvoiceId}", invoiceId);
+
+        var invoice = await _dbContext.Invoices
+            .FirstOrDefaultAsync(i => i.Id == invoiceId, ct);
+        if (invoice == null)
+            return ApiResponse<SuperQiPaymentResponse>.ErrorResponse("Invoice not found.");
+        if (invoice.Status == InvoiceStatus.Paid)
+            return ApiResponse<SuperQiPaymentResponse>.ErrorResponse("Invoice is already paid.");
+
+        var paymentRequestId = $"INV-{invoiceId}";
+        var expiryTime = DateTime.UtcNow.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:sszzz").Replace("+00:00", "+00:00");
+        var baseUrl = _configuration["APP_URL"] ?? "http://localhost:5022";
+
+        try
+        {
+            var paymentRequest = new AlipayPaymentRequest
+            {
+                ProductCode = ONLINE_PURCHASE,
+                PaymentRequestId = paymentRequestId,
+                PaymentAmount = new AlipayAmount
+                {
+                    Currency = invoice.Currency,
+                    Value = invoice.TotalAmount.ToString("0")
+                },
+                Order = new AlipayOrder
+                {
+                    OrderDescription = $"RentARide Invoice {invoiceId}",
+                    Buyer = new AlipayBuyer
+                    {
+                        ReferenceBuyerId = invoice.UserId.ToString()
+                    }
+                },
+                PaymentExpiryTime = expiryTime,
+                PaymentRedirectUrl = finishPaymentUrl,
+                PaymentNotifyUrl = baseUrl + SUPERQI_WEBHOOK_PATH
+            };
+
+            var paymentResponse = await _alipayService.PayAsync(paymentRequest, ct);
+
+            var response = new SuperQiPaymentResponse
+            {
+                Amount = invoice.TotalAmount,
+                PaymentId = paymentResponse.PaymentId
+            };
+
+            if (paymentResponse.RedirectActionForm?.RedirectUrl != null)
+            {
+                response.Success = true;
+                response.PaymentUrl = paymentResponse.RedirectActionForm.RedirectUrl;
+                invoice.SuperQiPaymentRequestId = paymentRequestId;
+                await _dbContext.SaveChangesAsync(ct);
+                _logger.LogInformation("[SuperQiMiniApp] Payment URL created for invoice {InvoiceId}: {PaymentId}", invoiceId, paymentResponse.PaymentId);
+            }
+            else if (paymentResponse.Result.ResultStatus == "S")
+            {
+                response.Success = true;
+                invoice.SuperQiPaymentId = paymentResponse.PaymentId;
+                invoice.SuperQiPaymentRequestId = paymentRequestId;
+                await _dbContext.SaveChangesAsync(ct);
+                _logger.LogInformation("[SuperQiMiniApp] Payment completed immediately for invoice {InvoiceId}: {PaymentId}", invoiceId, paymentResponse.PaymentId);
+            }
+            else
+            {
+                response.Success = false;
+                response.Error = paymentResponse.Result.ResultMessage ?? "No redirect URL received from payment API";
+                _logger.LogWarning("[SuperQiMiniApp] Payment failed for invoice {InvoiceId}: {Message}", invoiceId, response.Error);
+            }
+
+            return response.Success
+                ? ApiResponse<SuperQiPaymentResponse>.SuccessResponse(response)
+                : ApiResponse<SuperQiPaymentResponse>.ErrorResponse(response.Error ?? "Payment failed");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[SuperQiMiniApp] Create payment for invoice {InvoiceId} failed", invoiceId);
             return ApiResponse<SuperQiPaymentResponse>.ErrorResponse(ex.Message);
         }
     }

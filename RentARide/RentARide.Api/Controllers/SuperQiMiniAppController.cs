@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RentARide.Api.Common;
-using RentARide.Application.DTOs.Requests.SuperQi;
-using RentARide.Application.DTOs.Responses.Common;
-using RentARide.Application.DTOs.Responses.SuperQi;
+using RentARide.Application.DTOs.requests.SuperQi;
+using RentARide.Application.DTOs.responses.Common;
+using RentARide.Application.DTOs.responses.SuperQi;
 using RentARide.Application.Interfaces.Auth;
 using RentARide.Application.Interfaces.Services;
 
@@ -18,9 +18,18 @@ public class SuperQiMiniAppController(
     ISuperQiMiniAppService miniAppService,
     ICurrentUser currentUser) : BaseController
 {
-    // ========== Payment Endpoints ==========
+    /// <summary>Creates an online purchase payment for an existing invoice. Returns payment URL for redirect.</summary>
+    [Authorize]
+    [HttpPost("payment/invoice/{invoiceId:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<SuperQiPaymentResponse>), 200)]
+    [ProducesResponseType(400)]
+    public async Task<ActionResult<ApiResponse<SuperQiPaymentResponse>>> CreatePaymentForInvoice(Guid invoiceId, [FromQuery] string finishUrl, CancellationToken ct)
+    {
+        var result = await miniAppService.CreatePaymentForInvoiceAsync(invoiceId, finishUrl, ct);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 
-    /// <summary>Create test payment via Alipay+ (demo: 1 IQD).</summary>
+    // Create test payment 1 IQD
     [Authorize]
     [HttpPost("payment/create")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiPaymentResponse>), 200)]
@@ -31,7 +40,7 @@ public class SuperQiMiniAppController(
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    /// <summary>Refund a payment via Alipay+.</summary>
+    // Refund a payment via Alipay+
     [Authorize]
     [HttpPost("payment/refund")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiRefundResponse>), 200)]
@@ -45,7 +54,6 @@ public class SuperQiMiniAppController(
 
     // ========== Notification Endpoints ==========
 
-    /// <summary>Send inbox notification to user via Alipay+.</summary>
     [Authorize]
     [HttpPost("notification/inbox")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiNotificationResponse>), 200)]
@@ -57,7 +65,6 @@ public class SuperQiMiniAppController(
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    /// <summary>Send push notification to user via Alipay+.</summary>
     [Authorize]
     [HttpPost("notification/push")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiNotificationResponse>), 200)]
@@ -71,58 +78,35 @@ public class SuperQiMiniAppController(
 
     // ========== Agreement (Recurring Payment) Endpoints ==========
 
-    /// <summary>Prepare agreement contract for recurring payments.</summary>
+    // Prepare agreement contract for recurring payments
     [HttpPost("agreement/prepare")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiPrepareAuthResponse>), 200)]
     [ProducesResponseType(400)]
     public async Task<ActionResult<ApiResponse<SuperQiPrepareAuthResponse>>> PrepareAgreement(
         [FromBody] SuperQiPrepareAgreementRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(request.ContractDescription))
-            return BadRequest(ApiResponse<SuperQiPrepareAuthResponse>.ErrorResponse("contractDescription is required"));
-
         var result = await miniAppService.PrepareAgreementAsync(request.ContractDescription, ct);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    /// <summary>Exchange auth code for access token (agreement flow).</summary>
     [HttpPost("agreement/apply-token")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiApplyTokenResponse>), 200)]
     [ProducesResponseType(400)]
     public async Task<ActionResult<ApiResponse<SuperQiApplyTokenResponse>>> ApplyAgreementToken(
         [FromBody] SuperQiApplyTokenRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(request.AuthCode))
-            return BadRequest(ApiResponse<SuperQiApplyTokenResponse>.ErrorResponse("authCode is required"));
-
         var result = await miniAppService.ApplyAgreementTokenAsync(request.AuthCode, ct);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    /// <summary>Execute agreement payment (deduct from wallet automatically).</summary>
+    // Execute agreement payment
     [HttpPost("agreement/pay")]
     [ProducesResponseType(typeof(ApiResponse<SuperQiPaymentResponse>), 200)]
     [ProducesResponseType(400)]
     public async Task<ActionResult<ApiResponse<SuperQiPaymentResponse>>> ExecuteAgreementPayment(
         [FromBody] SuperQiAgreementPayRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(request.AccessToken))
-            return BadRequest(ApiResponse<SuperQiPaymentResponse>.ErrorResponse("accessToken is required"));
-
-        if (string.IsNullOrEmpty(request.CustomerId))
-            return BadRequest(ApiResponse<SuperQiPaymentResponse>.ErrorResponse("customerId is required"));
-
-        if (request.Amount <= 0)
-            return BadRequest(ApiResponse<SuperQiPaymentResponse>.ErrorResponse("amount must be greater than 0"));
-
-        var result = await miniAppService.ExecuteAgreementPaymentAsync(
-            request.AccessToken,
-            request.CustomerId,
-            request.Amount,
-            request.Currency ?? "IQD",
-            request.OrderDescription ?? "Agreement payment",
-            ct);
-
+        var result = await miniAppService.ExecuteAgreementPaymentAsync(request, ct);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

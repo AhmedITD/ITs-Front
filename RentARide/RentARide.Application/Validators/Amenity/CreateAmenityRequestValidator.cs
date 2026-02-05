@@ -1,5 +1,5 @@
 using FluentValidation;
-using RentARide.Application.DTOs.Requests.AmenityRequest;
+using RentARide.Application.DTOs.requests.AmenityRequest;
 
 namespace RentARide.Application.Validators.Amenity;
 

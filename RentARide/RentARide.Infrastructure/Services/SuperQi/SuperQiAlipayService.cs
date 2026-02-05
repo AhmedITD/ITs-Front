@@ -3,8 +3,8 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using RentARide.Application.DTOs.Requests.SuperQi;
-using RentARide.Application.DTOs.Responses.SuperQi;
+using RentARide.Application.DTOs.requests.SuperQi;
+using RentARide.Application.DTOs.responses.SuperQi;
 using RentARide.Application.Interfaces.Services;
 
 namespace RentARide.Infrastructure.Services.SuperQi;
@@ -22,6 +22,7 @@ public class SuperQiAlipayService : ISuperQiAlipayService
     private readonly string _gatewayUrl;
     private readonly string _clientId;
     private readonly RSA? _privateKey;
+    private readonly RSA? _alipayPublicKey;
 
     public SuperQiAlipayService(
         HttpClient httpClient,
@@ -39,6 +40,12 @@ public class SuperQiAlipayService : ISuperQiAlipayService
         if (!string.IsNullOrEmpty(privateKeyPath) && File.Exists(privateKeyPath))
         {
             _privateKey = LoadPrivateKey(privateKeyPath);
+        }
+        
+        var alipayPublicKeyPath = _configuration["SuperQiAlipay:AlipayPublicKeyPath"];
+        if (!string.IsNullOrEmpty(alipayPublicKeyPath))
+        {
+            _alipayPublicKey = LoadPublicKey(alipayPublicKeyPath);
         }
         
         _httpClient.Timeout = TimeSpan.FromSeconds(25);
@@ -137,6 +144,102 @@ public class SuperQiAlipayService : ISuperQiAlipayService
         _logger.LogInformation("[SuperQiAlipay] Preparing authorization for agreement");
         
         return await SendRequestAsync<AlipayPrepareAuthResponse>(path, payload, ct);
+    }
+
+    public bool VerifyWebhookSignature(string requestPath, string requestBody, string? clientId, string? requestTime, string? signatureHeader)
+    {
+        if (_alipayPublicKey == null)
+        {
+            _logger.LogWarning("[SuperQiAlipay] Alipay+ public key not configured, skipping webhook signature verification");
+            return true;
+        }
+        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(requestTime) || string.IsNullOrEmpty(signatureHeader))
+            return false;
+        var signatureValue = ExtractSignatureFromHeader(signatureHeader);
+        if (string.IsNullOrEmpty(signatureValue)) return false;
+        var signContent = $"POST {requestPath}\n{clientId}.{requestTime}.{requestBody}";
+        var signBytes = Encoding.UTF8.GetBytes(signContent);
+        try
+        {
+            var sigBytes = Base64UrlDecode(signatureValue);
+            return _alipayPublicKey.VerifyData(signBytes, sigBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[SuperQiAlipay] Webhook signature verification failed");
+            return false;
+        }
+    }
+
+    public (string ResponseBody, string ResponseTime, string Signature, string ClientId) CreateSignedWebhookResponse(string responseBody)
+    {
+        var responseTime = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz").Replace("+00:00", "Z");
+        if (_privateKey == null)
+        {
+            _logger.LogWarning("[SuperQiAlipay] Private key not loaded, cannot sign webhook response");
+            return (responseBody, responseTime, string.Empty, _clientId);
+        }
+        var path = "/api/payments/superqi-webhook";
+        var signContent = $"POST {path}\n{_clientId}.{responseTime}.{responseBody}";
+        var signBytes = Encoding.UTF8.GetBytes(signContent);
+        var signatureBytes = _privateKey.SignData(signBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var signature = Base64UrlEncode(signatureBytes);
+        return (responseBody, responseTime, signature, _clientId);
+    }
+
+    private static string? ExtractSignatureFromHeader(string header)
+    {
+        if (string.IsNullOrEmpty(header)) return null;
+        var parts = header.Split(',', StringSplitOptions.TrimEntries);
+        foreach (var p in parts)
+        {
+            if (p.StartsWith("signature=", StringComparison.OrdinalIgnoreCase))
+                return Uri.UnescapeDataString(p["signature=".Length..].Trim());
+        }
+        return null;
+    }
+
+    private static byte[] Base64UrlDecode(string input)
+    {
+        var base64 = input.Replace('-', '+').Replace('_', '/');
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return Convert.FromBase64String(base64);
+    }
+
+    private static string Base64UrlEncode(byte[] input)
+    {
+        return Convert.ToBase64String(input).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    private static RSA? LoadPublicKey(string pathOrKey)
+    {
+        try
+        {
+            var rsa = RSA.Create();
+            if (File.Exists(pathOrKey))
+            {
+                var pem = File.ReadAllText(pathOrKey);
+                rsa.ImportFromPem(pem);
+            }
+            else if (pathOrKey.Contains("-----BEGIN"))
+            {
+                rsa.ImportFromPem(pathOrKey);
+            }
+            else
+            {
+                var bytes = Convert.FromBase64String(pathOrKey);
+                rsa.ImportSubjectPublicKeyInfo(bytes, out _);
+            }
+            return rsa;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     // ========== Private Helpers ==========

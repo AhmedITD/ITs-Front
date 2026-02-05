@@ -1,6 +1,6 @@
-using RentARide.Application.DTOs.Requests.VehicleRequest;
-using RentARide.Application.DTOs.Responses.Common;
-using RentARide.Application.DTOs.Responses.VehicleResponse;
+using RentARide.Application.DTOs.requests.VehicleRequest;
+using RentARide.Application.DTOs.responses.Common;
+using RentARide.Application.DTOs.responses.VehicleResponse;
 
 namespace RentARide.Application.Interfaces.Services;
 

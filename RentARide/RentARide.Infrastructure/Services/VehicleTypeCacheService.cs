@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
-using RentARide.Application.DTOs.Responses.VehicleResponse;
+using RentARide.Application.DTOs.responses.VehicleResponse;
 using RentARide.Application.Interfaces.Services;
 
 namespace RentARide.Infrastructure.Services;

@@ -26,7 +26,7 @@ using RentARide.Infrastructure.Services;
 using RentARide.Infrastructure.Services.Auth;
 using RentARide.Infrastructure.Services.Sinks;
 using RentARide.Api.Json;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 using RentARide.Application.Validators.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -215,7 +215,7 @@ app.UseSwaggerUI(o =>
 {
     o.DisplayRequestDuration();
     // Use same origin so "Try it out" and frontend calls don't fail
-    o.SwaggerEndpoint("/swagger/v1/swagger.json", "RentARide API v1");
+    // o.SwaggerEndpoint("/swagger/v1/swagger.json", "RentARide API v1");
 });
 
 // Only redirect to HTTPS in production; in Development use the URL you're actually running (http or https)

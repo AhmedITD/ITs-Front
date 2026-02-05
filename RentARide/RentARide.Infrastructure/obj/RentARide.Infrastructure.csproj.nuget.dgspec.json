@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj": {}
+    "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj": {
+    "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj",
+        "projectUniqueName": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj",
         "projectName": "RentARide.Application",
-        "projectPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj",
+        "projectPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\obj\\",
+        "outputPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,8 +32,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj": {
-                "projectPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj"
+              "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj": {
+                "projectPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj"
               }
             }
           }
@@ -109,14 +109,14 @@
         }
       }
     },
-    "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj": {
+    "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj",
+        "projectUniqueName": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj",
         "projectName": "RentARide.Domain",
-        "projectPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj",
+        "projectPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\obj\\",
+        "outputPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -188,14 +188,14 @@
         }
       }
     },
-    "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj": {
+    "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj",
+        "projectUniqueName": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj",
         "projectName": "RentARide.Infrastructure",
-        "projectPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj",
+        "projectPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\obj\\",
+        "outputPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -216,11 +216,11 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj": {
-                "projectPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj"
+              "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj": {
+                "projectPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Application\\RentARide.Application.csproj"
               },
-              "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj": {
-                "projectPath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj"
+              "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj": {
+                "projectPath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Domain\\RentARide.Domain.csproj"
               }
             }
           }

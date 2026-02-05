@@ -10,7 +10,8 @@ namespace RentARide.Api.Controllers;
 public class PaymentsController(
     IQiCardService qiCardService,
     IInvoiceService invoiceService,
-    IRentalService rentalService) : ControllerBase
+    IRentalService rentalService,
+    ISuperQiAlipayService superQiAlipayService) : ControllerBase
 {
     [HttpPost("webhook")]
     [ProducesResponseType(200)]
@@ -51,6 +52,71 @@ public class PaymentsController(
         _ = await rentalService.CreateRentalFromInvoice(invoiceId, cancellationToken);
         await invoiceService.CancelOtherPendingPaymentsForVehicle(invoiceId, cancellationToken);
         return Ok();
+    }
+
+    /// <summary>Alipay+ (SuperQi) payment notification webhook. Handles INV-{invoiceId} paymentRequestIds.</summary>
+    [HttpPost("superqi-webhook")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> SuperQiWebhook(CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(body))
+            return BadRequest();
+
+        var requestPath = "/api/payments/superqi-webhook";
+        var clientId = Request.Headers["Client-Id"].FirstOrDefault();
+        var requestTime = Request.Headers["Request-Time"].FirstOrDefault();
+        var signature = Request.Headers["Signature"].FirstOrDefault();
+
+        if (!superQiAlipayService.VerifyWebhookSignature(requestPath, body, clientId, requestTime, signature))
+            return Unauthorized();
+
+        Dictionary<string, object>? data;
+        try
+        {
+            data = JsonElementToDictionary(JsonDocument.Parse(body).RootElement);
+        }
+        catch
+        {
+            return BadRequest();
+        }
+
+        var paymentRequestId = GetString(data, "paymentRequestId");
+        if (string.IsNullOrEmpty(paymentRequestId) || !paymentRequestId.StartsWith("INV-", StringComparison.OrdinalIgnoreCase))
+            return BuildSuperQiAckResponse(superQiAlipayService);
+
+        if (!Guid.TryParse(paymentRequestId.AsSpan(4), out var invoiceId))
+            return BuildSuperQiAckResponse(superQiAlipayService);
+
+        var paymentResultObj = data.TryGetValue("paymentResult", out var pr) ? pr : null;
+        var paymentResultDict = paymentResultObj as Dictionary<string, object> ?? data;
+        var resultStatus = GetString(paymentResultDict, "resultStatus");
+        if (resultStatus != "S")
+            return BuildSuperQiAckResponse(superQiAlipayService);
+
+        var markResult = await invoiceService.MarkAsPaid(invoiceId, cancellationToken);
+        if (!markResult.Success)
+            return BuildSuperQiAckResponse(superQiAlipayService);
+
+        _ = await rentalService.CreateRentalFromInvoice(invoiceId, cancellationToken);
+        await invoiceService.CancelOtherPendingPaymentsForVehicle(invoiceId, cancellationToken);
+        return BuildSuperQiAckResponse(superQiAlipayService);
+    }
+
+    private IActionResult BuildSuperQiAckResponse(ISuperQiAlipayService alipayService)
+    {
+        const string responseBody = """{"result":{"resultCode":"SUCCESS","resultStatus":"S","resultMessage":"Success"}}""";
+        var (_, responseTime, signature, clientId) = alipayService.CreateSignedWebhookResponse(responseBody);
+        if (!string.IsNullOrEmpty(signature))
+        {
+            Response.Headers.Append("Client-Id", clientId);
+            Response.Headers.Append("Response-Time", responseTime);
+            Response.Headers.Append("Signature", $"algorithm=RSA256, keyVersion=1, signature={Uri.EscapeDataString(signature)}");
+        }
+        return Content(responseBody, "application/json");
     }
 
     private static bool TryGetRequestId(Dictionary<string, object> data, out string? requestId)

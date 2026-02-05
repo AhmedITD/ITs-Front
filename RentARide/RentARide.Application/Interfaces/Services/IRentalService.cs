@@ -1,6 +1,6 @@
-using RentARide.Application.DTOs.Requests.RentalRequest;
-using RentARide.Application.DTOs.Responses.Common;
-using RentARide.Application.DTOs.Responses.RentalResponse;
+using RentARide.Application.DTOs.requests.RentalRequest;
+using RentARide.Application.DTOs.responses.Common;
+using RentARide.Application.DTOs.responses.RentalResponse;
 
 namespace RentARide.Application.Interfaces.Services;
 

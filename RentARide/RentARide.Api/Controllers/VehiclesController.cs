@@ -1,10 +1,10 @@
 using RentARide.Api.Common;
-using RentARide.Application.DTOs.Requests.VehicleRequest;
-using RentARide.Application.DTOs.Responses.VehicleResponse;
+using RentARide.Application.DTOs.requests.VehicleRequest;
+using RentARide.Application.DTOs.responses.VehicleResponse;
 using RentARide.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 
 namespace RentARide.Api.Controllers;
 

@@ -1,4 +1,4 @@
-namespace RentARide.Application.DTOs.Responses.QiCard;
+namespace RentARide.Application.DTOs.responses.QiCard;
 
 public class QiCardResponse
 {

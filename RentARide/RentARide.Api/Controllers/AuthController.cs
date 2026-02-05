@@ -1,8 +1,8 @@
 using RentARide.Api.Common;
 using RentARide.Application.Common;
-using RentARide.Application.DTOs.Requests.AuthRequest;
-using RentARide.Application.DTOs.Responses.Common;
-using RentARide.Application.DTOs.Responses.AuthResponse;
+using RentARide.Application.DTOs.requests.AuthRequest;
+using RentARide.Application.DTOs.responses.Common;
+using RentARide.Application.DTOs.responses.AuthResponse;
 using RentARide.Application.Interfaces.Auth;
 using RentARide.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;

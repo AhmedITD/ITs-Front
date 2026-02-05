@@ -1,4 +1,4 @@
-using RentARide.Application.DTOs.Responses.AmenityResponse;
+using RentARide.Application.DTOs.responses.AmenityResponse;
 using RentARide.Domain.Entities;
 using Mapster;
 

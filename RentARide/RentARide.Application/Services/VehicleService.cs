@@ -1,13 +1,13 @@
 using RentARide.Application.Common;
-using RentARide.Application.DTOs.Requests.VehicleRequest;
-using RentARide.Application.DTOs.Responses.VehicleResponse;
+using RentARide.Application.DTOs.requests.VehicleRequest;
+using RentARide.Application.DTOs.responses.VehicleResponse;
 using RentARide.Application.Interfaces;
 using RentARide.Application.Interfaces.Services;
 using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Mapster;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 
 namespace RentARide.Application.Services;
 

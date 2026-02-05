@@ -15,7 +15,7 @@
     loadVehicles,
     initVehicles,
     book,
-  } from '../lib/composables/vehicle/useVehicles.js'
+  } from '../lib/composables/useVehicles.js'
   import { formatCurrency } from '../lib/utils/index.js'
 
   onMount(() => initVehicles(10))

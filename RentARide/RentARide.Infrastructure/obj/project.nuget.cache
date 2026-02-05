@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "x06vyy7dCqI=",
+  "dgSpecHash": "pyKwFt36rsk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj",
+  "projectFilePath": "c:\\Users\\ASUS\\Desktop\\ITs\\Front\\RentARide\\RentARide.Infrastructure\\RentARide.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ASUS\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\dapper\\2.0.123\\dapper.2.0.123.nupkg.sha512",

@@ -1,4 +1,4 @@
-namespace RentARide.Application.DTOs.Requests.QiCard;
+namespace RentARide.Application.DTOs.requests.QiCard;
 
 public class QiCardPaymentRequest
 {
@@ -12,7 +12,6 @@ public class QiCardPaymentRequest
     public string? Description { get; set; }
 }
 
-/// <summary>Customer details aligned with User entity (no PasswordHash). Sent to QiCard.</summary>
 public class CustomerInfo
 {
     public string? FirstName { get; set; }
@@ -20,7 +19,6 @@ public class CustomerInfo
     public string? Email { get; set; }
 }
 
-/// <summary>Browser/client info for QiCard 3DS.</summary>
 public class BrowserInfo
 {
     public string? BrowserAcceptHeader { get; set; }

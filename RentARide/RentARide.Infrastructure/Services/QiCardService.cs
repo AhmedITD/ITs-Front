@@ -2,8 +2,8 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using RentARide.Application.DTOs.Requests.QiCard;
-using RentARide.Application.DTOs.Responses.QiCard;
+using RentARide.Application.DTOs.requests.QiCard;
+using RentARide.Application.DTOs.responses.QiCard;
 using RentARide.Application.Interfaces;
 
 namespace RentARide.Infrastructure.Services;
@@ -283,8 +283,7 @@ public class QiCardService : IQiCardService
         if (provided.StartsWith("sha256=", StringComparison.OrdinalIgnoreCase))
             provided = provided.Substring(7).Trim();
 
-        return expectedHex.Equals(provided, StringComparison.OrdinalIgnoreCase)
-               || expectedBase64.Equals(provided, StringComparison.Ordinal);
+        return expectedBase64.Equals(provided, StringComparison.Ordinal);
     }
     
     private static string NormalizeBrowserLanguage(string? language)

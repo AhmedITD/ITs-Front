@@ -1,12 +1,12 @@
 using RentARide.Application.Common;
-using RentARide.Application.DTOs.Requests.AuthRequest;
-using RentARide.Application.DTOs.Responses.AuthResponse;
+using RentARide.Application.DTOs.requests.AuthRequest;
+using RentARide.Application.DTOs.responses.AuthResponse;
 using RentARide.Application.Interfaces;
 using RentARide.Application.Interfaces.Auth;
 using RentARide.Domain.Entities;
 using RentARide.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using RentARide.Application.DTOs.Responses.Common;
+using RentARide.Application.DTOs.responses.Common;
 
 namespace RentARide.Application.Services;
 
